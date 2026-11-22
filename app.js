@@ -1,13 +1,13 @@
 /**
- * app.js — Minimalist 3D ASCII Diamond Ring & Editorial Archive
+ * app.js — Minimalist 3D ASCII Solitaire Ring, 3D ASCII Hello Kitty & 16-Memory Editorial Archive
  */
 
 const PI = Math.PI;
 const TAU = 2.0 * PI;
 
-const BAND = 0;
-const PRONG = 1;
-const GEM = 2;
+const BAND = 0;   // Ring band OR Kitty head/ears/whiskers (monochrome silver-ivory)
+const PRONG = 1;  // Ring prongs OR Kitty eyes/nose detail
+const GEM = 2;    // Diamond facets OR Kitty signature ribbon bow (subtle blush-ivory highlight)
 
 const R_BAND = 1.00;
 const r_BAND = 0.175;
@@ -23,7 +23,7 @@ const SPIN_DELAY = 1.0;
 const TURN = 34.0;
 
 // ============================================================================
-// 1. 3D RING GEOMETRY & POINT-CLOUD BUILDER (Pure @jin_22ee Mathematics)
+// 1A. 3D SOLITAIRE DIAMOND RING POINT-CLOUD BUILDER
 // ============================================================================
 function cross(a, b) {
   return [
@@ -172,6 +172,166 @@ function buildRingGeometry() {
   return { P, N, F, ORDER };
 }
 
+// ============================================================================
+// 1B. 3D ASCII HELLO KITTY SCULPTURE BUILDER (Code-Art Point Cloud)
+// ============================================================================
+function buildKittyGeometry() {
+  const P = [];
+  const N = [];
+  const F = [];
+  const ORDER = [];
+
+  function addPt(pt, n, tag) {
+    const nn = norm3(n);
+    P.push(pt);
+    N.push(nn);
+    F.push(tag);
+    // Smooth bottom-to-top draw order in [0, 1.70]
+    const ord = Math.max(0, Math.min(1.7, ((pt[1] + 0.85) / 2.2) * 1.7));
+    ORDER.push(ord);
+  }
+
+  // 1. Iconic Ellipsoidal Head (wide cheeks, soft rounded crown)
+  const rx = 1.12;
+  const ry = 0.86;
+  const rz = 0.78;
+  const uSteps = 150;
+  const vSteps = 76;
+  for (let i = 0; i < uSteps; i++) {
+    const u = (TAU * i) / uSteps;
+    const cosU = Math.cos(u);
+    const sinU = Math.sin(u);
+    for (let j = 1; j < vSteps; j++) {
+      const v = (PI * j) / vSteps;
+      const sinV = Math.sin(v);
+      const cosV = Math.cos(v);
+
+      // Slightly widen lower cheeks for authentic Hello Kitty proportion
+      const cheekWiden = 1.0 + 0.08 * Math.max(0, -cosV);
+      const px = rx * cheekWiden * sinV * cosU;
+      const py = 0.22 + ry * cosV;
+      const pz = rz * sinV * sinU;
+
+      // Skip eye and nose cavities on front (+z) so we can sculpt crisp high-contrast eyes & nose
+      if (pz > 0.4) {
+        const leftEyeDist = Math.hypot((px + 0.46) / 0.11, (py - 0.12) / 0.16);
+        const rightEyeDist = Math.hypot((px - 0.46) / 0.11, (py - 0.12) / 0.16);
+        const noseDist = Math.hypot(px / 0.13, (py + 0.04) / 0.09);
+        if (leftEyeDist < 1.15 || rightEyeDist < 1.15 || noseDist < 1.15) continue;
+      }
+
+      const nx = (sinV * cosU) / rx;
+      const ny = cosV / ry;
+      const nz = (sinV * sinU) / rz;
+      addPt([px, py, pz], [nx, ny, nz], BAND);
+    }
+  }
+
+  // 2. Sculpted Left & Right Cat Ears
+  for (const side of [-1, 1]) {
+    const earBaseX = side * 0.68;
+    const earBaseY = 0.78;
+    const earTipX = side * 0.92;
+    const earTipY = 1.36;
+
+    for (let h = 0; h <= 36; h++) {
+      const s = h / 36;
+      const cx = earBaseX + s * (earTipX - earBaseX);
+      const cy = earBaseY + s * (earTipY - earBaseY);
+      const radius = (1.0 - Math.pow(s, 1.35)) * 0.42;
+      const ringPts = Math.max(8, Math.floor(48 * (1.0 - s * 0.7)));
+      for (let k = 0; k < ringPts; k++) {
+        const a = (TAU * k) / ringPts;
+        const px = cx + radius * Math.cos(a) * 0.95;
+        const py = cy + radius * 0.25 * Math.cos(a) * (-side);
+        const pz = radius * Math.sin(a) * 0.78;
+        addPt([px, py, pz], [Math.cos(a) + side * 0.3, 0.45, Math.sin(a)], BAND);
+      }
+    }
+  }
+
+  // 3. Signature 3D Ribbon Bow on Her Left Ear (Viewer's Right: x > 0) — Tagged as GEM for blush-ivory highlight!
+  const bowCx = 0.56;
+  const bowCy = 0.92;
+  const bowCz = 0.48;
+  const tilt = -0.32;
+  const cosT = Math.cos(tilt);
+  const sinT = Math.sin(tilt);
+
+  function addBowPt(lx, ly, lz, nx, ny, nz) {
+    const rx2 = lx * cosT - ly * sinT;
+    const ry2 = lx * sinT + ly * cosT;
+    const nrx = nx * cosT - ny * sinT;
+    const nry = nx * sinT + ny * cosT;
+    addPt([bowCx + rx2, bowCy + ry2, bowCz + lz], [nrx, nry, nz], GEM);
+  }
+
+  // Bow Center Knot Sphere
+  for (let i = 0; i < 36; i++) {
+    const u = (TAU * i) / 36;
+    for (let j = 1; j < 20; j++) {
+      const v = (PI * j) / 20;
+      const rKnot = 0.14;
+      const lx = rKnot * Math.sin(v) * Math.cos(u);
+      const ly = rKnot * Math.cos(v);
+      const lz = rKnot * 0.85 * Math.sin(v) * Math.sin(u);
+      addBowPt(lx, ly, lz, Math.sin(v) * Math.cos(u), Math.cos(v), Math.sin(v) * Math.sin(u));
+    }
+  }
+
+  // Left & Right Sculpted Bow Loops
+  for (const bSide of [-1, 1]) {
+    for (let uIdx = 0; uIdx <= 36; uIdx++) {
+      const s = uIdx / 36; // 0 at knot -> 1 at outer wing edge
+      const loopX = bSide * (0.10 + s * 0.36);
+      const loopHalfH = 0.08 + Math.sin(s * PI * 0.82) * 0.22;
+      const loopDepth = 0.09 * Math.sin(s * PI);
+      for (let vIdx = 0; vIdx < 32; vIdx++) {
+        const a = (TAU * vIdx) / 32;
+        const ly = loopHalfH * Math.sin(a);
+        const lz = loopDepth * Math.cos(a);
+        addBowPt(loopX, ly, lz, bSide * 0.35, Math.sin(a), Math.cos(a) + 0.5);
+      }
+    }
+  }
+
+  // 4. Nose & Eyes (High-contrast sculpted features on front face)
+  for (let i = 0; i < 28; i++) {
+    const u = (TAU * i) / 28;
+    for (let j = 1; j < 14; j++) {
+      const v = (PI * j) / 14;
+      // Button Nose (GEM tag for warm blush nose highlight)
+      const nx = 0.10 * Math.sin(v) * Math.cos(u);
+      const ny = -0.04 + 0.07 * Math.cos(v);
+      const nz = 0.77 + 0.05 * Math.sin(v) * Math.sin(u);
+      addPt([nx, ny, nz], [0, 0.2, 1], GEM);
+    }
+  }
+
+  // 5. Six Whiskers (3 Left, 3 Right)
+  const whiskerAngles = [0.16, 0.0, -0.16];
+  for (const side of [-1, 1]) {
+    for (let w = 0; w < 3; w++) {
+      const wa = whiskerAngles[w];
+      const startX = side * 0.92;
+      const startY = 0.12 + (1 - w) * 0.17;
+      const startZ = 0.36;
+      for (let step = 0; step <= 26; step++) {
+        const s = step / 26;
+        const wx = startX + side * s * 0.48;
+        const wy = startY + Math.sin(wa) * s * 0.36 - s * s * 0.05;
+        const wz = startZ - s * 0.08;
+        for (let t = 0; t < 4; t++) {
+          const phi = (TAU * t) / 4;
+          addPt([wx, wy + 0.014 * Math.cos(phi), wz + 0.014 * Math.sin(phi)], [side * 0.4, 0.2, 0.9], BAND);
+        }
+      }
+    }
+  }
+
+  return { P, N, F, ORDER };
+}
+
 function buildButterflyWings() {
   const pts = [];
   const steps = 820;
@@ -214,8 +374,11 @@ function buildAmbientDust(count = 260) {
 }
 
 const RING_DATA = buildRingGeometry();
+const KITTY_DATA = buildKittyGeometry();
 const WING_DATA = buildButterflyWings();
 const DUST_DATA = buildAmbientDust();
+
+let activeSculpture = 'ring'; // 'ring' | 'kitty'
 
 // ============================================================================
 // 2. AUDIO ENGINE (Full Song: Mohamed Rahma - Meen Ye3ayeshak, 5.5s Fade-In)
@@ -319,7 +482,7 @@ class LoveSongPlayer {
 const loveSong = new LoveSongPlayer();
 
 // ============================================================================
-// 3. MONOCHROME 3D ASCII DIAMOND RING RENDERER (No Emojis, Pure Code Art)
+// 3. MONOCHROME 3D ASCII RENDERER (Solitaire Ring & 3D Hello Kitty)
 // ============================================================================
 const canvas = document.getElementById('ring-canvas');
 const ctx = canvas.getContext('2d');
@@ -335,8 +498,8 @@ let isDragging = false;
 let dragStartX = 0;
 let dragStartY = 0;
 
-// Pure Latin monospace ASCII characters for crisp geometric alignment
 const RING_PHRASE = 'WILLYOUMARRYME';
+const KITTY_PHRASE = 'HELLOKITTYLOVE';
 const SHADE_CHARS = ' .,:;+i1tfLCG08@';
 
 function resizeCanvas() {
@@ -353,14 +516,13 @@ resizeCanvas();
 
 const visualPane = document.getElementById('visual-pane');
 visualPane.addEventListener('pointerdown', (e) => {
-  if (e.target.closest('.memory-rail') || e.target.closest('.editorial-footer')) return;
+  if (e.target.closest('.memory-rail') || e.target.closest('.editorial-footer') || e.target.closest('.ring-core-overlay')) return;
   isDragging = true;
   dragStartX = e.clientX;
   dragStartY = e.clientY;
 });
 
 window.addEventListener('pointermove', (e) => {
-  // Subtle light parallax responding to cursor position
   pointerLightX = (e.clientX / Math.max(1, window.innerWidth) - 0.5) * 0.45;
   pointerLightY = (e.clientY / Math.max(1, window.innerHeight) - 0.5) * 0.35;
 
@@ -378,6 +540,10 @@ window.addEventListener('pointerup', () => {
 });
 
 function spinAngle(t) {
+  if (activeSculpture === 'kitty') {
+    // Gentle 3D oscillation so Hello Kitty's face, whiskers, and 3D bow stay mostly front-facing in 3D
+    return Math.sin(t * 0.55) * 0.48;
+  }
   return (TAU * Math.max(t - DRAW_END_T - SPIN_DELAY, 0)) / TURN;
 }
 
@@ -450,7 +616,7 @@ function renderScene(t) {
     }
   }
 
-  // B. Monochrome Caustic Dispersion Wings
+  // B. Caustic Dispersion Wings (Echoing Hello Kitty's Bow Silhouette behind the Sculpture)
   const wingFade = Math.max(0, Math.min(1, (t - 6.0) / 4.5));
   if (wingFade > 0.01) {
     const wingChars = ['.', ':', '+', '*', '·'];
@@ -461,13 +627,13 @@ function renderScene(t) {
       if (alpha > 0.08) {
         const sx = cx + wp.x * baseRadiusPx;
         const sy = cy - (wp.y - 0.18) * baseRadiusPx;
-        ctx.fillStyle = `rgba(205, 208, 218, ${Math.min(0.58, alpha).toFixed(3)})`;
+        ctx.fillStyle = `rgba(208, 204, 214, ${Math.min(0.58, alpha).toFixed(3)})`;
         ctx.fillText(wingChars[i % wingChars.length], sx, sy);
       }
     }
   }
 
-  // C. Z-Buffer Grid for the 3D Ring Point Cloud
+  // C. Z-Buffer Grid for the Active 3D Sculpture (Ring or Hello Kitty)
   const gridSize = cols * rows;
   const zBuf = new Float32Array(gridSize);
   const lumBuf = new Float32Array(gridSize);
@@ -475,7 +641,8 @@ function renderScene(t) {
   const tagBuf = new Int8Array(gridSize);
   zBuf.fill(-9999);
 
-  const { P, N, F, ORDER } = RING_DATA;
+  const activeData = activeSculpture === 'kitty' ? KITTY_DATA : RING_DATA;
+  const { P, N, F, ORDER } = activeData;
   const totalPts = P.length;
 
   for (let i = 0; i < totalPts; i++) {
@@ -531,8 +698,9 @@ function renderScene(t) {
     }
   }
 
-  // D. Render Floor Reflection & Monochrome Silver-Platinum Ring Cells
-  const phraseLen = RING_PHRASE.length;
+  // D. Render Floor Reflection & Sculpture Cells
+  const phrase = activeSculpture === 'kitty' ? KITTY_PHRASE : RING_PHRASE;
+  const phraseLen = phrase.length;
   const floorY = cy + 1.28 * baseRadiusPx;
 
   for (let gy = 1; gy < rows - 1; gy++) {
@@ -551,16 +719,26 @@ function renderScene(t) {
       if (spec > 0.64) {
         ch = ['@', '#', 'W', 'M', '$'][(gx + gy) % 5];
       } else if (lum > 0.52) {
-        ch = RING_PHRASE[(gx * 3 + gy * 7) % phraseLen];
+        ch = phrase[(gx * 3 + gy * 7) % phraseLen];
       } else {
         const sIdx = Math.min(SHADE_CHARS.length - 1, Math.max(1, Math.floor(lum * SHADE_CHARS.length)));
         ch = SHADE_CHARS[sIdx];
       }
 
       const b = Math.floor(68 + lum * 187);
-      const r = tag === GEM ? Math.min(255, b + Math.floor(spec * 20)) : b;
-      const g = tag === GEM ? Math.min(255, b + Math.floor(spec * 20)) : b;
-      const bl = Math.min(255, b + 8);
+      let r = b;
+      let g = b;
+      let bl = Math.min(255, b + 8);
+
+      if (activeSculpture === 'kitty' && tag === GEM) {
+        // Subtle editorial blush-ivory tint on Hello Kitty's 3D Bow & button nose
+        r = Math.min(255, Math.floor(b * 1.08 + 22));
+        g = Math.min(255, Math.floor(b * 0.84));
+        bl = Math.min(255, Math.floor(b * 0.90));
+      } else if (tag === GEM) {
+        r = Math.min(255, b + Math.floor(spec * 20));
+        g = Math.min(255, b + Math.floor(spec * 20));
+      }
 
       ctx.fillStyle = `rgb(${r}, ${g}, ${bl})`;
       ctx.fillText(ch, sx, sy);
@@ -578,35 +756,37 @@ function renderScene(t) {
     }
   }
 
-  // E. Crosshair Alignment Rays & Crown Table Vertical Light Burst
-  const crossFade = t < DRAW_END_T ? Math.min(1, t / 2.5) : Math.max(0.14, 0.38 * Math.cos(totalYaw) ** 2);
-  if (crossFade > 0.05) {
-    const botY = cy - (-R_BAND - 0.18) * baseRadiusPx;
-    ctx.fillStyle = `rgba(175, 180, 194, ${(0.28 * crossFade).toFixed(3)})`;
-    for (let k = -6; k <= 8; k++) {
-      ctx.fillText('|', cx, botY + k * cellH);
-      if (k % 2 === 0) {
-        ctx.fillText('|', cx - cellW * 2.5, botY + k * cellH * 0.8);
-        ctx.fillText('|', cx + cellW * 2.5, botY + k * cellH * 0.8);
+  // E. Crosshair Alignment Rays & Crown Table Vertical Light Burst (Ring Mode)
+  if (activeSculpture === 'ring') {
+    const crossFade = t < DRAW_END_T ? Math.min(1, t / 2.5) : Math.max(0.14, 0.38 * Math.cos(totalYaw) ** 2);
+    if (crossFade > 0.05) {
+      const botY = cy - (-R_BAND - 0.18) * baseRadiusPx;
+      ctx.fillStyle = `rgba(175, 180, 194, ${(0.28 * crossFade).toFixed(3)})`;
+      for (let k = -6; k <= 8; k++) {
+        ctx.fillText('|', cx, botY + k * cellH);
+        if (k % 2 === 0) {
+          ctx.fillText('|', cx - cellW * 2.5, botY + k * cellH * 0.8);
+          ctx.fillText('|', cx + cellW * 2.5, botY + k * cellH * 0.8);
+        }
+      }
+      for (let k = -8; k <= 8; k++) {
+        if (k !== 0) ctx.fillText('-', cx + k * cellW, botY + cellH * 2);
       }
     }
-    for (let k = -8; k <= 8; k++) {
-      if (k !== 0) ctx.fillText('-', cx + k * cellW, botY + cellH * 2);
-    }
-  }
 
-  const crownBurstFade = Math.max(0, Math.min(1, (drawProg - 1.35) / 0.35));
-  if (crownBurstFade > 0.02) {
-    const tableScreenY = cy - (TABLE_Y - 0.18) * baseRadiusPx;
-    for (let r = -3; r <= 3; r++) {
-      const rayH = (11 - Math.abs(r) * 2) + Math.floor(audioBoost * 4);
-      for (let step = 1; step <= rayH; step++) {
-        const rx = cx + r * cellW * (1.1 + step * 0.08);
-        const ry = tableScreenY - step * cellH * 0.92;
-        const rayAlpha = crownBurstFade * (1.0 - step / (rayH + 1)) * (0.52 + 0.25 * audioBoost);
-        ctx.fillStyle = `rgba(232, 235, 244, ${Math.min(0.82, rayAlpha).toFixed(3)})`;
-        const rayChar = r === 0 ? '|' : (r < 0 ? '\\' : '/');
-        ctx.fillText(Math.abs(r) <= 1 ? '|' : rayChar, rx, ry);
+    const crownBurstFade = Math.max(0, Math.min(1, (drawProg - 1.35) / 0.35));
+    if (crownBurstFade > 0.02) {
+      const tableScreenY = cy - (TABLE_Y - 0.18) * baseRadiusPx;
+      for (let r = -3; r <= 3; r++) {
+        const rayH = (11 - Math.abs(r) * 2) + Math.floor(audioBoost * 4);
+        for (let step = 1; step <= rayH; step++) {
+          const rx = cx + r * cellW * (1.1 + step * 0.08);
+          const ry = tableScreenY - step * cellH * 0.92;
+          const rayAlpha = crownBurstFade * (1.0 - step / (rayH + 1)) * (0.52 + 0.25 * audioBoost);
+          ctx.fillStyle = `rgba(232, 235, 244, ${Math.min(0.82, rayAlpha).toFixed(3)})`;
+          const rayChar = r === 0 ? '|' : (r < 0 ? '\\' : '/');
+          ctx.fillText(Math.abs(r) <= 1 ? '|' : rayChar, rx, ry);
+        }
       }
     }
   }
@@ -628,27 +808,96 @@ function renderScene(t) {
 }
 
 // ============================================================================
-// 4. ANIMATION LOOP & EDITORIAL ARCHIVE / NOTE INTERACTIONS
+// 4. COMPLETE 16-MEMORY ARCHIVE (13 PHOTOS + 3 VIDEOS) & INTERACTIONS
 // ============================================================================
-function tickFrame(now) {
-  const dt = Math.min(0.1, (now - lastFrameTs) / 1000);
-  lastFrameTs = now;
+const MEMORIES = [
+  { type: 'image', src: 'assets/photo3.jpg',  title: 'وعدنا',     caption: 'وعدنا الذي لا ينتهي — إلى الأبد' },
+  { type: 'image', src: 'assets/photo1.jpg',  title: 'البداية',   caption: 'من البداية وحتى آخر العمر' },
+  { type: 'video', src: 'assets/video1.mp4',  title: 'يداكِ',     caption: 'معاً في كل لحظة' },
+  { type: 'image', src: 'assets/photo4.jpg',  title: 'الأمان',    caption: 'في قربكِ كل السكينة والأمان' },
+  { type: 'image', src: 'assets/photo2.jpg',  title: 'وردة لكِ',  caption: 'لكِ وحدكِ' },
+  { type: 'image', src: 'assets/photo5.jpg',  title: 'الورد',     caption: 'كل تفصيل جميل يشبهكِ' },
+  { type: 'video', src: 'assets/video2.mp4',  title: 'ذكرياتنا',  caption: 'ذكريات حلوة لا تُنسى أبداً' },
+  { type: 'image', src: 'assets/photo6.jpg',  title: 'خطواتنا',   caption: 'كل خطوة معكِ هي حياة' },
+  { type: 'image', src: 'assets/photo7.jpg',  title: 'بهجتنا',    caption: 'فرحة قلبي وأنا بجانبكِ' },
+  { type: 'image', src: 'assets/photo8.jpg',  title: 'معاً',      caption: 'بجانبكِ في كل مكان' },
+  { type: 'image', src: 'assets/photo9.jpg',  title: 'تفاصيلكِ',  caption: 'أحب كل تفاصيلكِ الصغيرة' },
+  { type: 'image', src: 'assets/photo10.jpg', title: 'ابتسامتكِ', caption: 'ضحكتكِ تضيء أيامي' },
+  { type: 'image', src: 'assets/photo11.jpg', title: 'نفس الروح', caption: 'روح واحدة في قلبين' },
+  { type: 'image', src: 'assets/photo12.jpg', title: 'أوقاتنا',   caption: 'أجمل أوقاتي هي التي تجمعني بكِ' },
+  { type: 'image', src: 'assets/photo13.jpg', title: 'عفويتنا',   caption: 'حتى لحظاتنا العفوية معاً لا مثيل لها' },
+  { type: 'video', src: 'assets/video3.mp4',  title: 'ضحكتنا',    caption: 'ضحكنا معاً من القلب' }
+];
 
-  if (isRunning) {
-    animTime += dt;
-  }
+let currentMemoryIdx = 0;
 
-  renderScene(animTime);
-  requestAnimationFrame(tickFrame);
+function buildArchiveDOM() {
+  const railList = document.getElementById('rail-scroll-list');
+  const gridBox = document.getElementById('archive-grid-container');
+  if (!railList || !gridBox) return;
+
+  railList.innerHTML = '';
+  gridBox.innerHTML = '';
+
+  MEMORIES.forEach((item, idx) => {
+    const numStr = String(idx + 1).padStart(2, '0');
+    const mediaTag = item.type === 'video'
+      ? `<video src="${item.src}" muted loop playsinline preload="metadata"></video><span class="rail-type-tag">FILM</span>`
+      : `<img src="${item.src}" alt="${numStr}" loading="lazy" />`;
+
+    // 1. Left Rail Item
+    const btn = document.createElement('button');
+    btn.className = 'rail-item';
+    btn.type = 'button';
+    btn.setAttribute('data-index', String(idx));
+    btn.innerHTML = `
+      <span class="rail-num">${numStr}</span>
+      <div class="rail-thumb">${mediaTag}</div>
+      <span class="rail-label" dir="rtl">${item.title}</span>
+    `;
+    btn.addEventListener('click', () => openSpotlight(idx));
+    railList.appendChild(btn);
+
+    // 2. Contact Sheet Grid Cell
+    const cell = document.createElement('div');
+    cell.className = 'grid-cell';
+    cell.innerHTML = `
+      <div class="grid-cell-media">${mediaTag}</div>
+      <div class="grid-cell-meta">
+        <span class="grid-cell-num">${numStr}</span>
+        <span class="grid-cell-title" dir="rtl">${item.title}</span>
+      </div>
+    `;
+    cell.addEventListener('click', () => {
+      document.getElementById('grid-modal').classList.add('hidden');
+      openSpotlight(idx);
+    });
+    gridBox.appendChild(cell);
+  });
 }
 
-const MEMORIES = [
-  { type: 'image', src: 'assets/photo1.jpg', caption: 'من البداية وإلى الأبد' },
-  { type: 'video', src: 'assets/video1.mp4', caption: 'معاً في كل لحظة' },
-  { type: 'image', src: 'assets/photo2.jpg', caption: 'لكِ وحدكِ' },
-  { type: 'video', src: 'assets/video2.mp4', caption: 'ذكريات لا تُنسى' }
-];
-let currentMemoryIdx = 0;
+function setSculptureMode(mode) {
+  activeSculpture = mode;
+  userYawOffset = 0;
+  userPitchOffset = 0;
+  if (animTime < DRAW_END_T) {
+    animTime = DRAW_END_T + 0.5;
+  }
+
+  const ringBtn = document.getElementById('mode-ring-btn');
+  const kittyBtn = document.getElementById('mode-kitty-btn');
+  const coreOverlay = document.getElementById('ring-core-overlay');
+
+  if (mode === 'kitty') {
+    ringBtn.classList.remove('active');
+    kittyBtn.classList.add('active');
+    coreOverlay.classList.add('kitty-mode');
+  } else {
+    kittyBtn.classList.remove('active');
+    ringBtn.classList.add('active');
+    coreOverlay.classList.remove('kitty-mode');
+  }
+}
 
 function openSpotlight(index) {
   currentMemoryIdx = (index + MEMORIES.length) % MEMORIES.length;
@@ -661,7 +910,8 @@ function openSpotlight(index) {
   box.innerHTML = '';
   cap.textContent = item.caption;
   if (idxLabel) {
-    idxLabel.textContent = `ARCHIVE // 0${currentMemoryIdx + 1} OF 04`;
+    const numStr = String(currentMemoryIdx + 1).padStart(2, '0');
+    idxLabel.textContent = `ARCHIVE // ${numStr} OF ${MEMORIES.length}`;
   }
 
   if (item.type === 'video') {
@@ -692,7 +942,21 @@ function closeSpotlight() {
   loveSong.setDucked(false);
 }
 
+function tickFrame(now) {
+  const dt = Math.min(0.1, (now - lastFrameTs) / 1000);
+  lastFrameTs = now;
+
+  if (isRunning) {
+    animTime += dt;
+  }
+
+  renderScene(animTime);
+  requestAnimationFrame(tickFrame);
+}
+
 window.addEventListener('DOMContentLoaded', () => {
+  buildArchiveDOM();
+
   const SECRET_PASSCODE = 'l0vey0u@';
   const introOverlay = document.getElementById('intro-overlay');
   const introCard = document.getElementById('intro-card');
@@ -709,7 +973,6 @@ window.addEventListener('DOMContentLoaded', () => {
     secretError.classList.remove('visible');
     secretWrap.classList.add('unlocked');
 
-    // Start the MP3 song synchronously inside the user gesture
     loveSong.play();
 
     document.querySelectorAll('.rail-thumb video').forEach((v) => {
@@ -754,6 +1017,31 @@ window.addEventListener('DOMContentLoaded', () => {
       loveSong.audio.play().catch(() => {});
     }
   }, { once: true });
+
+  // Sculpture Mode Switchers (01 / SOLITAIRE vs 02 / HELLO KITTY)
+  document.getElementById('mode-ring-btn').addEventListener('click', () => setSculptureMode('ring'));
+  document.getElementById('mode-kitty-btn').addEventListener('click', () => setSculptureMode('kitty'));
+  document.getElementById('ring-core-overlay').addEventListener('click', () => {
+    setSculptureMode(activeSculpture === 'ring' ? 'kitty' : 'ring');
+  });
+
+  // Complete Archive Grid Sheet Modal (03 / ARCHIVE 16)
+  const gridModal = document.getElementById('grid-modal');
+  const openGrid = () => {
+    gridModal.classList.remove('hidden');
+    gridModal.querySelectorAll('video').forEach((v) => {
+      v.muted = true;
+      v.play().catch(() => {});
+    });
+  };
+  document.getElementById('open-grid-btn').addEventListener('click', openGrid);
+  document.getElementById('footer-grid-btn').addEventListener('click', openGrid);
+  document.getElementById('close-grid-btn').addEventListener('click', () => {
+    gridModal.classList.add('hidden');
+  });
+  gridModal.addEventListener('click', (e) => {
+    if (e.target.id === 'grid-modal') gridModal.classList.add('hidden');
+  });
 
   // Footer Audio Mute / Play Toggle
   const audioToggleBtn = document.getElementById('audio-toggle-btn');
@@ -821,14 +1109,6 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
-  // Archive Rail Items
-  document.querySelectorAll('.rail-item').forEach((item) => {
-    item.addEventListener('click', () => {
-      const idx = parseInt(item.getAttribute('data-index') || '0', 10);
-      openSpotlight(idx);
-    });
-  });
 
   document.getElementById('close-spotlight-btn').addEventListener('click', closeSpotlight);
   document.getElementById('spotlight-modal').addEventListener('click', (e) => {

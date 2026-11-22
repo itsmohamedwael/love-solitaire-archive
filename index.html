@@ -10,10 +10,31 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Minimalist Editorial Passcode Gate ("l0vey0u@") -->
+  <!-- Minimalist Editorial Passcode Gate ("l0vey0u@") with Fine-Line Hello Kitty Crest -->
   <div id="intro-overlay" class="intro-overlay">
     <div class="gate-container" id="intro-card">
-      <div class="gate-index" dir="ltr">PRIVATE EDITION // 2026</div>
+      <!-- Minimalist Fine-Line Hello Kitty Silhouette & Bow SVG -->
+      <svg class="hk-line-crest gate-crest" viewBox="0 0 120 96" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <!-- Head & Ears Outline -->
+        <path d="M24 54 C20 36, 23 18, 30 14 C36 11, 44 20, 49 25 C56 23, 64 23, 71 25 C76 20, 84 11, 90 14 C97 18, 100 36, 96 54 C99 68, 84 82, 60 82 C36 82, 21 68, 24 54 Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- Iconic Bow on Right/Left Ear (Subtle Blush Accent) -->
+        <path d="M75 26 C66 18, 64 29, 73 33 C65 37, 72 44, 79 35" stroke="#d8a7b1" stroke-width="1.35" stroke-linecap="round"/>
+        <path d="M85 28 C95 22, 98 33, 88 36 C96 41, 88 47, 82 37" stroke="#d8a7b1" stroke-width="1.35" stroke-linecap="round"/>
+        <circle cx="80.5" cy="33.5" r="3.6" stroke="#d8a7b1" stroke-width="1.35"/>
+        <!-- Eyes & Nose -->
+        <ellipse cx="43" cy="56" rx="2.2" ry="3.2" fill="currentColor"/>
+        <ellipse cx="77" cy="56" rx="2.2" ry="3.2" fill="currentColor"/>
+        <ellipse cx="60" cy="62" rx="3.2" ry="2.2" stroke="#d8a7b1" stroke-width="1.2"/>
+        <!-- Whiskers -->
+        <line x1="12" y1="50" x2="26" y2="52" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+        <line x1="10" y1="58" x2="25" y2="58" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+        <line x1="13" y1="66" x2="27" y2="64" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+        <line x1="108" y1="50" x2="94" y2="52" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+        <line x1="110" y1="58" x2="95" y2="58" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+        <line x1="107" y1="66" x2="93" y2="64" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+      </svg>
+
+      <div class="gate-index" dir="ltr">PRIVATE EDITION // HK — 2026</div>
       <h1 class="gate-title">بحبك</h1>
       <p class="gate-subtitle">أدخلي الرمز السري للمتابعة</p>
 
@@ -42,54 +63,36 @@
   <!-- Main Minimalist Experience -->
   <main id="app-shell" class="app-shell" dir="ltr">
     <section id="visual-pane" class="visual-pane">
-      <!-- Pure Monochrome 3D ASCII Diamond Ring Canvas -->
+      <!-- Pure Monochrome 3D ASCII Canvas (Diamond Ring & 3D Hello Kitty) -->
       <canvas id="ring-canvas"></canvas>
 
-      <!-- Subtle Editorial Wordmark in the Hollow Center of the Ring -->
-      <div id="ring-core-overlay" class="ring-core-overlay">
+      <!-- Subtle Editorial Wordmark & Fine-Line Hello Kitty Bow in the Hollow Center -->
+      <div id="ring-core-overlay" class="ring-core-overlay" title="Switch 3D Sculpture">
+        <svg class="core-bow-svg" viewBox="0 0 44 26" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M18 11 C7 2, 3 14, 14 16 C5 20, 12 25, 19 16" stroke="#d8a7b1" stroke-width="1.2" stroke-linecap="round"/>
+          <path d="M26 11 C37 2, 41 14, 30 16 C39 20, 32 25, 25 16" stroke="#d8a7b1" stroke-width="1.2" stroke-linecap="round"/>
+          <circle cx="22" cy="13.5" r="3.2" stroke="#d8a7b1" stroke-width="1.2"/>
+        </svg>
         <span class="core-word">بحبك</span>
       </div>
 
-      <!-- Minimal Architectural Filmstrip (Left Margin: 01 - 04) -->
+      <!-- Minimal Architectural Filmstrip (Left Margin: All 16 Memories) -->
       <aside id="memory-rail" class="memory-rail" aria-label="Archive">
-        <div class="rail-header">ARCHIVE</div>
-        <button class="rail-item" data-index="0" type="button">
-          <span class="rail-num">01</span>
-          <div class="rail-thumb">
-            <img src="assets/photo1.jpg" alt="01" loading="eager" />
-          </div>
-          <span class="rail-label" dir="rtl">البداية</span>
-        </button>
-
-        <button class="rail-item" data-index="1" type="button">
-          <span class="rail-num">02</span>
-          <div class="rail-thumb">
-            <video src="assets/video1.mp4" autoplay loop muted playsinline></video>
-          </div>
-          <span class="rail-label" dir="rtl">معاً</span>
-        </button>
-
-        <button class="rail-item" data-index="2" type="button">
-          <span class="rail-num">03</span>
-          <div class="rail-thumb">
-            <img src="assets/photo2.jpg" alt="03" loading="eager" />
-          </div>
-          <span class="rail-label" dir="rtl">لكِ</span>
-        </button>
-
-        <button class="rail-item" data-index="3" type="button">
-          <span class="rail-num">04</span>
-          <div class="rail-thumb">
-            <video src="assets/video2.mp4" autoplay loop muted playsinline></video>
-          </div>
-          <span class="rail-label" dir="rtl">ذكرياتنا</span>
-        </button>
+        <div class="rail-header-row">
+          <span class="rail-header">ARCHIVE // 16</span>
+          <button id="open-grid-btn" class="rail-view-all" type="button">INDEX</button>
+        </div>
+        <div id="rail-scroll-list" class="rail-scroll-list"></div>
       </aside>
 
       <!-- Minimal Editorial Footer Bar (Never overlaps the ring) -->
       <footer id="editorial-footer" class="editorial-footer">
         <div class="footer-left">
-          <span class="footer-index">01 / SOLITAIRE</span>
+          <button id="mode-ring-btn" class="footer-mode-btn active" type="button">01 / SOLITAIRE</button>
+          <span class="footer-divider">/</span>
+          <button id="mode-kitty-btn" class="footer-mode-btn" type="button">02 / HELLO KITTY</button>
+          <span class="footer-divider">/</span>
+          <button id="footer-grid-btn" class="footer-mode-btn" type="button">03 / ARCHIVE (16)</button>
           <span class="footer-divider">—</span>
           <button id="open-letter-btn" class="footer-link" type="button" dir="rtl">كلمة من القلب</button>
         </div>
@@ -108,6 +111,24 @@
     </section>
   </main>
 
+  <!-- Full-Screen Editorial Contact Sheet Modal (All 13 Photos & 3 Videos in Clean Architectural Grid) -->
+  <div id="grid-modal" class="editorial-modal hidden">
+    <div class="grid-sheet-card">
+      <div class="viewer-top-bar" dir="ltr">
+        <div class="sheet-title-group">
+          <svg class="sheet-bow-svg" viewBox="0 0 44 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 11 C7 2, 3 14, 14 16 C5 20, 12 25, 19 16" stroke="#d8a7b1" stroke-width="1.2" stroke-linecap="round"/>
+            <path d="M26 11 C37 2, 41 14, 30 16 C39 20, 32 25, 25 16" stroke="#d8a7b1" stroke-width="1.2" stroke-linecap="round"/>
+            <circle cx="22" cy="13.5" r="3.2" stroke="#d8a7b1" stroke-width="1.2"/>
+          </svg>
+          <span class="note-meta">COMPLETE ARCHIVE // 16 MEMORIES</span>
+        </div>
+        <button id="close-grid-btn" class="minimal-close" type="button">CLOSE</button>
+      </div>
+      <div id="archive-grid-container" class="archive-grid-container"></div>
+    </div>
+  </div>
+
   <!-- Minimal Editorial Note Drawer / Modal -->
   <div id="letter-modal" class="editorial-modal hidden">
     <div class="editorial-note-card" dir="rtl">
@@ -125,7 +146,7 @@
   <div id="spotlight-modal" class="editorial-modal hidden">
     <div class="viewer-card">
       <div class="viewer-top-bar" dir="ltr">
-        <span id="viewer-index-label" class="note-meta">ARCHIVE // 01 OF 04</span>
+        <span id="viewer-index-label" class="note-meta">ARCHIVE // 01 OF 16</span>
         <button id="close-spotlight-btn" class="minimal-close" type="button">CLOSE</button>
       </div>
       <div id="spotlight-media-box" class="viewer-stage"></div>
