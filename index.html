@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>بحبك — Private Archive</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Sans+Arabic:wght@300;400;500&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Minimalist Editorial Passcode Gate ("l0vey0u@") -->
+  <div id="intro-overlay" class="intro-overlay">
+    <div class="gate-container" id="intro-card">
+      <div class="gate-index" dir="ltr">PRIVATE EDITION // 2026</div>
+      <h1 class="gate-title">بحبك</h1>
+      <p class="gate-subtitle">أدخلي الرمز السري للمتابعة</p>
+
+      <form id="secret-form" class="gate-form" autocomplete="off">
+        <div class="gate-input-wrap" id="secret-input-wrap">
+          <input
+            type="password"
+            id="secret-code-input"
+            class="gate-input"
+            placeholder="passcode"
+            dir="ltr"
+            autofocus
+          />
+        </div>
+        <div id="secret-error-msg" class="gate-error">الرمز غير صحيح</div>
+        <button type="submit" id="start-btn" class="gate-submit" dir="ltr">
+          ENTER
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Native HTML5 Audio Element (Full Song: Mohamed Rahma - Meen Ye3ayeshak) -->
+  <audio id="bg-love-song" src="assets/meen_ye3ayeshak.mp3" preload="auto" loop></audio>
+
+  <!-- Main Minimalist Experience -->
+  <main id="app-shell" class="app-shell" dir="ltr">
+    <section id="visual-pane" class="visual-pane">
+      <!-- Pure Monochrome 3D ASCII Diamond Ring Canvas -->
+      <canvas id="ring-canvas"></canvas>
+
+      <!-- Subtle Editorial Wordmark in the Hollow Center of the Ring -->
+      <div id="ring-core-overlay" class="ring-core-overlay">
+        <span class="core-word">بحبك</span>
+      </div>
+
+      <!-- Minimal Architectural Filmstrip (Left Margin: 01 - 04) -->
+      <aside id="memory-rail" class="memory-rail" aria-label="Archive">
+        <div class="rail-header">ARCHIVE</div>
+        <button class="rail-item" data-index="0" type="button">
+          <span class="rail-num">01</span>
+          <div class="rail-thumb">
+            <img src="assets/photo1.jpg" alt="01" loading="eager" />
+          </div>
+          <span class="rail-label" dir="rtl">البداية</span>
+        </button>
+
+        <button class="rail-item" data-index="1" type="button">
+          <span class="rail-num">02</span>
+          <div class="rail-thumb">
+            <video src="assets/video1.mp4" autoplay loop muted playsinline></video>
+          </div>
+          <span class="rail-label" dir="rtl">معاً</span>
+        </button>
+
+        <button class="rail-item" data-index="2" type="button">
+          <span class="rail-num">03</span>
+          <div class="rail-thumb">
+            <img src="assets/photo2.jpg" alt="03" loading="eager" />
+          </div>
+          <span class="rail-label" dir="rtl">لكِ</span>
+        </button>
+
+        <button class="rail-item" data-index="3" type="button">
+          <span class="rail-num">04</span>
+          <div class="rail-thumb">
+            <video src="assets/video2.mp4" autoplay loop muted playsinline></video>
+          </div>
+          <span class="rail-label" dir="rtl">ذكرياتنا</span>
+        </button>
+      </aside>
+
+      <!-- Minimal Editorial Footer Bar (Never overlaps the ring) -->
+      <footer id="editorial-footer" class="editorial-footer">
+        <div class="footer-left">
+          <span class="footer-index">01 / SOLITAIRE</span>
+          <span class="footer-divider">—</span>
+          <button id="open-letter-btn" class="footer-link" type="button" dir="rtl">كلمة من القلب</button>
+        </div>
+
+        <div class="footer-center" dir="rtl">
+          <span id="dedication-message" class="footer-quote">وجودك في حياتي هو كل ما أملك</span>
+        </div>
+
+        <div class="footer-right">
+          <button id="audio-toggle-btn" class="footer-audio-btn" type="button">
+            <span class="audio-dot" id="audio-dot"></span>
+            <span>MOHAMED RAHMA — MEEN YE3AYESHAK</span>
+          </button>
+        </div>
+      </footer>
+    </section>
+  </main>
+
+  <!-- Minimal Editorial Note Drawer / Modal -->
+  <div id="letter-modal" class="editorial-modal hidden">
+    <div class="editorial-note-card" dir="rtl">
+      <div class="note-top-bar" dir="ltr">
+        <span class="note-meta">NOTE // FOR YOU</span>
+        <button id="close-letter-btn" class="minimal-close" type="button">CLOSE</button>
+      </div>
+      <h2 class="note-heading">بحبك</h2>
+      <p id="typewriter-text" class="note-body"></p>
+      <div class="note-sign">دائماً وإلى الأبد</div>
+    </div>
+  </div>
+
+  <!-- Minimal Architectural Media Viewer (Photos & Videos with Original Sound) -->
+  <div id="spotlight-modal" class="editorial-modal hidden">
+    <div class="viewer-card">
+      <div class="viewer-top-bar" dir="ltr">
+        <span id="viewer-index-label" class="note-meta">ARCHIVE // 01 OF 04</span>
+        <button id="close-spotlight-btn" class="minimal-close" type="button">CLOSE</button>
+      </div>
+      <div id="spotlight-media-box" class="viewer-stage"></div>
+      <div class="viewer-bottom-bar">
+        <button id="prev-mem-btn" class="viewer-nav-btn" type="button">PREV</button>
+        <p id="spotlight-caption" class="viewer-caption" dir="rtl"></p>
+        <button id="next-mem-btn" class="viewer-nav-btn" type="button">NEXT</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
