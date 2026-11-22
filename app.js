@@ -642,18 +642,41 @@ function renderScene(t, dt) {
   const morphEase = 1.0 - Math.pow(1.0 - morphProgress, 3);
   const vortexTwist = Math.sin(morphProgress * PI) * 1.55;
 
-  const cellW = 5.8;
-  const cellH = 8.2;
+  const isMobile = W < 640;
+  const cellW = isMobile ? 4.3 : 5.8;
+  const cellH = isMobile ? 6.1 : 8.2;
   const cols = Math.floor(W / cellW);
   const rows = Math.floor(H / cellH);
+
+  // Measure bottom HUD height so the 3D sculpture is always centered in the clear space above the HUD
+  const hudEl = document.querySelector('.scene1-bottom-hud');
+  const hudH = hudEl ? hudEl.offsetHeight + 18 : (isMobile ? 115 : 85);
+  const stageH = Math.max(180, H - hudH);
 
   const beatScale = activeSculpture === 'heart'
     ? 1.0 + 0.025 * Math.sin(t * 3.2) + audioBoost * 0.03
     : 1.0;
 
-  const baseRadiusPx = Math.min(W, H) * 0.235 * beatScale;
+  const baseRadiusPx = Math.min(W * (isMobile ? 0.30 : 0.25), stageH * 0.32) * beatScale;
   const cx = W * 0.5;
-  const cy = H * 0.44;
+  const cy = stageH * 0.53;
+
+  // Lock "#ring-core-overlay" ("بحبك") to the exact screen coordinates of the heart's hollow center!
+  const coreOverlay = document.getElementById('ring-core-overlay');
+  if (coreOverlay) {
+    const heartHoleScreenY = cy - 0.04 * baseRadiusPx;
+    coreOverlay.style.top = `${heartHoleScreenY.toFixed(1)}px`;
+    const wordEl = coreOverlay.querySelector('.core-word');
+    const bowEl = coreOverlay.querySelector('.core-bow-svg');
+    if (wordEl) {
+      const fontPx = Math.max(20, Math.min(44, baseRadiusPx * 0.31));
+      wordEl.style.fontSize = `${fontPx.toFixed(1)}px`;
+    }
+    if (bowEl) {
+      const bowW = Math.max(20, Math.min(36, baseRadiusPx * 0.25));
+      bowEl.style.width = `${bowW.toFixed(1)}px`;
+    }
+  }
 
   const drawProg = Math.min(1.75, (t / DRAW_END_T) * 1.70);
 
@@ -667,9 +690,13 @@ function renderScene(t, dt) {
   const { key, rim } = lightsAt(t);
   const halfVec = norm3([key[0], key[1], key[2] + 1.0]);
 
-  ctx.font = '500 8.2px "JetBrains Mono", monospace';
+  ctx.font = isMobile
+    ? '500 6.4px "JetBrains Mono", monospace'
+    : '500 8.2px "JetBrains Mono", monospace';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+
+  const maxRow = Math.min(rows - 2, Math.floor((H - hudH + 6) / cellH));
 
   // A. Starlight Dust Field
   for (let i = 0; i < DUST_DATA.length; i++) {
@@ -778,7 +805,7 @@ function renderScene(t, dt) {
 
     const gx = Math.floor(sx / cellW);
     const gy = Math.floor(sy / cellH);
-    if (gx < 1 || gx >= cols - 1 || gy < 1 || gy >= rows - 10) continue;
+    if (gx < 1 || gx >= cols - 1 || gy < 1 || gy >= maxRow) continue;
 
     const cellIdx = gy * cols + gx;
     if (rz > zBuf[cellIdx]) {
@@ -808,7 +835,7 @@ function renderScene(t, dt) {
   const phraseLen = phrase.length;
   const floorY = cy + 1.22 * baseRadiusPx;
 
-  for (let gy = 1; gy < rows - 10; gy++) {
+  for (let gy = 1; gy < maxRow; gy++) {
     for (let gx = 1; gx < cols - 1; gx++) {
       const cellIdx = gy * cols + gx;
       if (zBuf[cellIdx] === -9999) continue;
@@ -882,8 +909,7 @@ function renderScene(t, dt) {
     }
   }
 
-  const coreOverlay = document.getElementById('ring-core-overlay');
-  if (t > 1.8) {
+  if (coreOverlay && t > 1.8) {
     coreOverlay.classList.add('visible');
   }
 }
@@ -991,11 +1017,11 @@ let elasticString = null;
 // 5. MULTI-SCENE PAGE CONTROLLER & AUTHENTIC EGYPTIAN ARABIC CONTENT
 // ============================================================================
 const SCENE_INFO = [
-  { prev: 'السابق', next: 'كملي الحكاية: إنتي وأنا' },
-  { prev: 'الرجوع للقلب', next: 'شوفي ذكرياتنا وفيديوهاتنا (16)' },
-  { prev: 'إنتي وأنا', next: 'حاجات بحبها فيكي' },
-  { prev: 'ذكرياتنا', next: 'آخر مفاجأة: رسالتي ليكي' },
-  { prev: 'حاجات بحبها فيكي', next: 'من الأول ↺' }
+  { prev: 'السابق', next: 'التالي: إنتي وأنا' },
+  { prev: 'قلبنا', next: 'التالي: ذكرياتنا (16)' },
+  { prev: 'إنتي وأنا', next: 'التالي: بحب فيكي إيه' },
+  { prev: 'ذكرياتنا', next: 'التالي: رسالتي ليكي' },
+  { prev: 'السابق', next: 'من الأول ↺' }
 ];
 
 let currentSceneIdx = 0;
