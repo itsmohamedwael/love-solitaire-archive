@@ -1,28 +1,49 @@
 /**
- * app.js — Hello Kitty × Spider-Man 3D Interactive Love Experience
- * Features 4 3D Code-Art Sculptures (Spider-Kitty Dual Heart, 3D Hello Kitty,
- * 3D Spider-Man Mask, 3D Blooming Rose), Silk Web Cursor Trail, 16-Memory Bento Gallery,
- * 8 Interactive 3D Flip Cards, and Full-Length Song ("مين يعيشك — محمد رحمه") with 5.5s Fade-In.
+ * app.js — Hello Kitty × Spider-Man Interactive Experience
+ * Implements:
+ * 1. 3D Point-Cloud Vortex Morphing Engine across 4 Sculptures (Heart, Hello Kitty, Spider-Man, Rose)
+ * 2. Elastic Verlet/Spring Spider-Web String Physics Canvas
+ * 3. Spring-Damped 3D Card Tilt & Specular Glare Tracking + Staggered 3D Scroll Reveals
+ * 4. Authentic Egyptian Arabic (عامية مصرية) Copy & Full Song ("مين يعيشك — محمد رحمه") with 5.5s Fade-In
  */
 
 const PI = Math.PI;
 const TAU = 2.0 * PI;
 
-// Color / material tags for the 3D point-cloud renderer
-const TAG_IVORY = 0;    // Hello Kitty ivory-white
-const TAG_PINK = 1;     // Hello Kitty blush-pink bow & right heart half
-const TAG_CRIMSON = 2;  // Spider-Man crimson-red mask, left heart half & rose petals
-const TAG_GOLD = 3;     // Hello Kitty nose & starlight accents
+const TAG_IVORY = 0;
+const TAG_PINK = 1;
+const TAG_CRIMSON = 2;
+const TAG_GOLD = 3;
 
-const DRAW_END_T = 7.5;
+const DRAW_END_T = 7.2;
+const MORPH_COUNT = 12000;
 
 function norm3(v) {
   const len = Math.hypot(v[0], v[1], v[2]) || 1.0;
   return [v[0] / len, v[1] / len, v[2] / len];
 }
 
+// Resample any 3D point cloud to exact MORPH_COUNT points so any sculpture can smoothly morph into any other!
+function normalizePointCloud(raw) {
+  const srcLen = raw.P.length;
+  const P = new Array(MORPH_COUNT);
+  const N = new Array(MORPH_COUNT);
+  const F = new Int8Array(MORPH_COUNT);
+  const ORDER = new Float32Array(MORPH_COUNT);
+
+  for (let i = 0; i < MORPH_COUNT; i++) {
+    // Deterministic stratified index mapping
+    const idx = Math.floor((i * srcLen) / MORPH_COUNT) % srcLen;
+    P[i] = raw.P[idx];
+    N[i] = raw.N[idx];
+    F[i] = raw.F[idx];
+    ORDER[i] = raw.ORDER[idx];
+  }
+  return { P, N, F, ORDER };
+}
+
 // ============================================================================
-// 1A. 3D SPIDER-KITTY DUAL HEART SCULPTURE (Replaces the Wedding Ring!)
+// 1A. 3D SPIDER-KITTY DUAL HEART SCULPTURE
 // ============================================================================
 function buildHeartGeometry() {
   const P = [];
@@ -35,15 +56,12 @@ function buildHeartGeometry() {
     P.push(pt);
     N.push(nn);
     F.push(tag);
-    // Draw from bottom tip (-1.1) up to top lobes (+1.3)
     const ord = Math.max(0, Math.min(1.7, ((pt[1] + 1.15) / 2.45) * 1.7));
     ORDER.push(ord);
   }
 
-  // 1. 3D Parametric Volumetric Heart Shell
-  // x = 16 sin^3(v) cos(u), y = 13 cos(v) - 5 cos(2v) - 2 cos(3v) - cos(4v), z = 10 sin^3(v) sin(u)
-  const uSteps = 160;
-  const vSteps = 84;
+  const uSteps = 150;
+  const vSteps = 78;
   for (let i = 0; i < uSteps; i++) {
     const u = (TAU * i) / uSteps;
     const cosU = Math.cos(u);
@@ -62,26 +80,19 @@ function buildHeartGeometry() {
       const py = rawY * 0.072 + 0.18;
       const pz = rawZ * 0.072;
 
-      const nx = px;
-      const ny = py - 0.18;
-      const nz = pz * 1.3;
-
-      // Duality: Left half (px < 0) is Spider-Man Crimson with Web Lattice;
-      // Right half (px >= 0) is Hello Kitty Blush Pink & Ivory!
       let tag = TAG_PINK;
       if (px < -0.02) {
-        // Spider-web radial & concentric lines on the left side
         const webLine = (i % 10 === 0) || (j % 9 === 0);
         tag = webLine ? TAG_IVORY : TAG_CRIMSON;
       } else {
         tag = (i + j) % 5 === 0 ? TAG_IVORY : TAG_PINK;
       }
 
-      addPt([px, py, pz], [nx, ny, nz], tag);
+      addPt([px, py, pz], [px, py - 0.18, pz * 1.3], tag);
     }
   }
 
-  // 2. Signature 3D Hello Kitty Bow Perched on the Upper-Right Lobe of the Heart
+  // Signature 3D Hello Kitty Bow on the Upper-Right Lobe of the Heart
   const bowCx = 0.62;
   const bowCy = 0.88;
   const bowCz = 0.42;
@@ -95,11 +106,10 @@ function buildHeartGeometry() {
     addPt([bowCx + rx2, bowCy + ry2, bowCz + lz], [nx, ny, nz], tag);
   }
 
-  // Center knot of the bow
-  for (let i = 0; i < 32; i++) {
-    const u = (TAU * i) / 32;
-    for (let j = 1; j < 16; j++) {
-      const v = (PI * j) / 16;
+  for (let i = 0; i < 28; i++) {
+    const u = (TAU * i) / 28;
+    for (let j = 1; j < 14; j++) {
+      const v = (PI * j) / 14;
       const rK = 0.13;
       addBowPt(
         rK * Math.sin(v) * Math.cos(u),
@@ -113,29 +123,20 @@ function buildHeartGeometry() {
     }
   }
 
-  // Left & right ribbon loops of the bow
   for (const bSide of [-1, 1]) {
-    for (let uIdx = 0; uIdx <= 32; uIdx++) {
-      const s = uIdx / 32;
+    for (let uIdx = 0; uIdx <= 28; uIdx++) {
+      const s = uIdx / 28;
       const loopX = bSide * (0.09 + s * 0.34);
       const loopH = 0.08 + Math.sin(s * PI * 0.84) * 0.21;
       const loopD = 0.09 * Math.sin(s * PI);
-      for (let vIdx = 0; vIdx < 28; vIdx++) {
-        const a = (TAU * vIdx) / 28;
-        addBowPt(
-          loopX,
-          loopH * Math.sin(a),
-          loopD * Math.cos(a),
-          bSide * 0.3,
-          Math.sin(a),
-          Math.cos(a) + 0.5,
-          TAG_PINK
-        );
+      for (let vIdx = 0; vIdx < 24; vIdx++) {
+        const a = (TAU * vIdx) / 24;
+        addBowPt(loopX, loopH * Math.sin(a), loopD * Math.cos(a), bSide * 0.3, Math.sin(a), Math.cos(a) + 0.5, TAG_PINK);
       }
     }
   }
 
-  return { P, N, F, ORDER };
+  return normalizePointCloud({ P, N, F, ORDER });
 }
 
 // ============================================================================
@@ -159,8 +160,8 @@ function buildKittyGeometry() {
   const rx = 1.12;
   const ry = 0.86;
   const rz = 0.78;
-  const uSteps = 150;
-  const vSteps = 76;
+  const uSteps = 140;
+  const vSteps = 72;
   for (let i = 0; i < uSteps; i++) {
     const u = (TAU * i) / uSteps;
     const cosU = Math.cos(u);
@@ -186,19 +187,18 @@ function buildKittyGeometry() {
     }
   }
 
-  // Ears
   for (const side of [-1, 1]) {
     const earBaseX = side * 0.68;
     const earBaseY = 0.78;
     const earTipX = side * 0.92;
     const earTipY = 1.36;
 
-    for (let h = 0; h <= 34; h++) {
-      const s = h / 34;
+    for (let h = 0; h <= 30; h++) {
+      const s = h / 30;
       const cx = earBaseX + s * (earTipX - earBaseX);
       const cy = earBaseY + s * (earTipY - earBaseY);
       const radius = (1.0 - Math.pow(s, 1.35)) * 0.42;
-      const ringPts = Math.max(8, Math.floor(44 * (1.0 - s * 0.7)));
+      const ringPts = Math.max(8, Math.floor(40 * (1.0 - s * 0.7)));
       for (let k = 0; k < ringPts; k++) {
         const a = (TAU * k) / ringPts;
         const px = cx + radius * Math.cos(a) * 0.95;
@@ -209,7 +209,6 @@ function buildKittyGeometry() {
     }
   }
 
-  // 3D Ribbon Bow on Her Ear
   const bowCx = 0.56;
   const bowCy = 0.92;
   const bowCz = 0.48;
@@ -223,10 +222,10 @@ function buildKittyGeometry() {
     addPt([bowCx + rx2, bowCy + ry2, bowCz + lz], [nx, ny, nz], tag);
   }
 
-  for (let i = 0; i < 34; i++) {
-    const u = (TAU * i) / 34;
-    for (let j = 1; j < 18; j++) {
-      const v = (PI * j) / 18;
+  for (let i = 0; i < 30; i++) {
+    const u = (TAU * i) / 30;
+    for (let j = 1; j < 16; j++) {
+      const v = (PI * j) / 16;
       const rKnot = 0.14;
       addBowPt(
         rKnot * Math.sin(v) * Math.cos(u),
@@ -241,28 +240,26 @@ function buildKittyGeometry() {
   }
 
   for (const bSide of [-1, 1]) {
-    for (let uIdx = 0; uIdx <= 34; uIdx++) {
-      const s = uIdx / 34;
+    for (let uIdx = 0; uIdx <= 30; uIdx++) {
+      const s = uIdx / 30;
       const loopX = bSide * (0.10 + s * 0.36);
       const loopHalfH = 0.08 + Math.sin(s * PI * 0.82) * 0.22;
       const loopDepth = 0.09 * Math.sin(s * PI);
-      for (let vIdx = 0; vIdx < 30; vIdx++) {
-        const a = (TAU * vIdx) / 30;
+      for (let vIdx = 0; vIdx < 26; vIdx++) {
+        const a = (TAU * vIdx) / 26;
         addBowPt(loopX, loopHalfH * Math.sin(a), loopDepth * Math.cos(a), bSide * 0.35, Math.sin(a), Math.cos(a) + 0.5, TAG_PINK);
       }
     }
   }
 
-  // Golden Button Nose
-  for (let i = 0; i < 26; i++) {
-    const u = (TAU * i) / 26;
-    for (let j = 1; j < 14; j++) {
-      const v = (PI * j) / 14;
+  for (let i = 0; i < 24; i++) {
+    const u = (TAU * i) / 24;
+    for (let j = 1; j < 12; j++) {
+      const v = (PI * j) / 12;
       addPt([0.10 * Math.sin(v) * Math.cos(u), -0.04 + 0.07 * Math.cos(v), 0.77 + 0.05 * Math.sin(v) * Math.sin(u)], [0, 0.2, 1], TAG_GOLD);
     }
   }
 
-  // 6 Whiskers
   const whiskerAngles = [0.16, 0.0, -0.16];
   for (const side of [-1, 1]) {
     for (let w = 0; w < 3; w++) {
@@ -270,8 +267,8 @@ function buildKittyGeometry() {
       const startX = side * 0.92;
       const startY = 0.12 + (1 - w) * 0.17;
       const startZ = 0.36;
-      for (let step = 0; step <= 24; step++) {
-        const s = step / 24;
+      for (let step = 0; step <= 22; step++) {
+        const s = step / 22;
         const wx = startX + side * s * 0.48;
         const wy = startY + Math.sin(wa) * s * 0.36 - s * s * 0.05;
         const wz = startZ - s * 0.08;
@@ -283,11 +280,11 @@ function buildKittyGeometry() {
     }
   }
 
-  return { P, N, F, ORDER };
+  return normalizePointCloud({ P, N, F, ORDER });
 }
 
 // ============================================================================
-// 1C. 3D SPIDER-MAN × HELLO KITTY MASK SCULPTURE
+// 1C. 3D SPIDER-MAN MASK SCULPTURE
 // ============================================================================
 function buildSpideyGeometry() {
   const P = [];
@@ -304,9 +301,8 @@ function buildSpideyGeometry() {
     ORDER.push(ord);
   }
 
-  // Sculpted Spider-Man Mask Head (tapered chin, athletic brow)
-  const uSteps = 160;
-  const vSteps = 84;
+  const uSteps = 155;
+  const vSteps = 82;
   for (let i = 0; i < uSteps; i++) {
     const u = (TAU * i) / uSteps;
     const cosU = Math.cos(u);
@@ -317,30 +313,25 @@ function buildSpideyGeometry() {
       const sinV = Math.sin(v);
       const cosV = Math.cos(v);
 
-      // Taper the lower jaw/chin (cosV < 0)
       const jawTaper = cosV < 0 ? 1.0 - 0.28 * Math.pow(-cosV, 1.4) : 1.0;
       const px = 0.88 * jawTaper * sinV * cosU;
       const py = 0.18 + 1.08 * cosV;
       const pz = 0.86 * jawTaper * sinV * sinU;
 
-      // Iconic Spider-Man Angular Eyes on Front (+z)
       if (pz > 0.35) {
         const ax = Math.abs(px);
-        // Eye lens region: tilted upward outward
         const eyeCenterY = 0.22 + (ax - 0.34) * 0.45;
         const dy = py - eyeCenterY;
         const inEyeLens = ax > 0.14 && ax < 0.62 && dy > -0.16 * (1 - Math.abs(ax - 0.38) * 1.8) && dy < 0.18 * (1 - Math.abs(ax - 0.38) * 1.6);
 
         if (inEyeLens) {
-          // Thick black rim vs bright white inner eye lens
           const inInnerWhite = ax > 0.18 && ax < 0.57 && dy > -0.11 && dy < 0.13;
-          if (!inInnerWhite) continue; // Dark gap creates the bold black Spider-Eye border!
+          if (!inInnerWhite) continue;
           addPt([px * 1.03, py, pz * 1.04], [px, py - 0.18, pz + 0.5], TAG_IVORY);
           continue;
         }
       }
 
-      // Web grid lines radiating from the nose bridge
       const isWebMeridian = (i % 10 === 0);
       const isWebRing = (j % 8 === 0);
       const tag = (isWebMeridian || isWebRing) ? TAG_PINK : TAG_CRIMSON;
@@ -349,11 +340,11 @@ function buildSpideyGeometry() {
     }
   }
 
-  return { P, N, F, ORDER };
+  return normalizePointCloud({ P, N, F, ORDER });
 }
 
 // ============================================================================
-// 1D. 3D BLOOMING ROSE SCULPTURE ("وردة حبنا 3D")
+// 1D. 3D BLOOMING ROSE SCULPTURE
 // ============================================================================
 function buildRoseGeometry() {
   const P = [];
@@ -370,22 +361,21 @@ function buildRoseGeometry() {
     ORDER.push(ord);
   }
 
-  // Layered 3D Spiral Rose Petals
   const numPetals = 22;
   const goldenAngle = PI * (3 - Math.sqrt(5));
 
   for (let p = 0; p < numPetals; p++) {
-    const layer = p / numPetals; // 0 (inner bud) -> 1 (outer open petals)
+    const layer = p / numPetals;
     const baseAngle = p * goldenAngle;
     const petalRadius = 0.22 + layer * 0.78;
     const petalHeight = 0.65 - layer * 0.38;
     const flare = 0.25 + layer * 0.85;
     const tag = p % 3 === 0 ? TAG_PINK : TAG_CRIMSON;
 
-    for (let uIdx = 0; uIdx <= 28; uIdx++) {
-      const u = (uIdx / 28 - 0.5) * 1.35; // angular width of each petal
-      for (let vIdx = 0; vIdx <= 24; vIdx++) {
-        const v = vIdx / 24; // 0 (base) -> 1 (top curled lip of petal)
+    for (let uIdx = 0; uIdx <= 26; uIdx++) {
+      const u = (uIdx / 26 - 0.5) * 1.35;
+      for (let vIdx = 0; vIdx <= 22; vIdx++) {
+        const v = vIdx / 22;
         const ang = baseAngle + u * (0.55 + 0.5 * v);
         const curl = Math.pow(v, 2.2) * flare * 0.38;
         const r = petalRadius * (0.35 + 0.65 * Math.sin(v * PI * 0.75)) + curl;
@@ -398,9 +388,8 @@ function buildRoseGeometry() {
     }
   }
 
-  // Sculpted Stem & Two Leaves below the Rose
-  for (let s = 0; s <= 70; s++) {
-    const t = s / 70;
+  for (let s = 0; s <= 65; s++) {
+    const t = s / 65;
     const y = 0.22 - t * 1.25;
     const stemCurveX = 0.05 * Math.sin(t * PI);
     for (let k = 0; k < 10; k++) {
@@ -409,7 +398,7 @@ function buildRoseGeometry() {
     }
   }
 
-  return { P, N, F, ORDER };
+  return normalizePointCloud({ P, N, F, ORDER });
 }
 
 function buildButterflyWings() {
@@ -462,7 +451,10 @@ const SCULPTURES = {
 const WING_DATA = buildButterflyWings();
 const DUST_DATA = buildAmbientDust();
 
-let activeSculpture = 'heart'; // Default: 3D Spider-Kitty Dual Heart!
+// Morphing State Engine (Vortex Spring Interpolation)
+let fromSculpture = 'heart';
+let activeSculpture = 'heart';
+let morphProgress = 1.0; // 0.0 -> 1.0 during smooth 3D particle morphing
 
 // ============================================================================
 // 2. AUDIO ENGINE (Full Song: Mohamed Rahma - Meen Ye3ayeshak, 5.5s Fade-In)
@@ -566,7 +558,7 @@ class LoveSongPlayer {
 const loveSong = new LoveSongPlayer();
 
 // ============================================================================
-// 3. 3D CODE-ART RENDERER + SILK SPIDER-WEB CURSOR TRAIL
+// 3. 3D VORTEX-MORPHING RENDERER + SILK SPIDER-WEB CURSOR TRAIL
 // ============================================================================
 const canvas = document.getElementById('ring-canvas');
 const ctx = canvas.getContext('2d');
@@ -576,13 +568,14 @@ let isRunning = true;
 let lastFrameTs = performance.now();
 let userYawOffset = 0.0;
 let userPitchOffset = 0.0;
-let pointerLightX = 0.0;
-let pointerLightY = 0.0;
+let smoothLightX = 0.0;
+let smoothLightY = 0.0;
+let targetLightX = 0.0;
+let targetLightY = 0.0;
 let isDragging = false;
 let dragStartX = 0;
 let dragStartY = 0;
 
-// Silk Web & Blush Ribbon Cursor Trail Points
 const WEB_TRAIL = [];
 
 const PHRASE_MAP = {
@@ -617,10 +610,9 @@ visualPane.addEventListener('pointermove', (e) => {
   const lx = e.clientX - rect.left;
   const ly = e.clientY - rect.top;
 
-  pointerLightX = (lx / Math.max(1, rect.width) - 0.5) * 0.48;
-  pointerLightY = (ly / Math.max(1, rect.height) - 0.5) * 0.38;
+  targetLightX = (lx / Math.max(1, rect.width) - 0.5) * 0.52;
+  targetLightY = (ly / Math.max(1, rect.height) - 0.5) * 0.42;
 
-  // Add silk spider-web trail node
   WEB_TRAIL.push({ x: lx, y: ly, life: 1.0 });
   if (WEB_TRAIL.length > 28) WEB_TRAIL.shift();
 
@@ -645,17 +637,20 @@ function spinAngle(t) {
 }
 
 function lightsAt(t) {
+  // Spring-damped cursor light tracking
+  smoothLightX += (targetLightX - smoothLightX) * 0.08;
+  smoothLightY += (targetLightY - smoothLightY) * 0.08;
   const a = t * 0.25;
   const key = norm3([
-    0.62 * Math.cos(a) + pointerLightX,
-    0.78 - pointerLightY,
+    0.62 * Math.cos(a) + smoothLightX,
+    0.78 - smoothLightY,
     0.65 + 0.22 * Math.sin(a)
   ]);
   const rim = norm3([-0.58, -0.32, -0.74]);
   return { key, rim };
 }
 
-function renderScene(t) {
+function renderScene(t, dt) {
   const rect = canvas.parentElement.getBoundingClientRect();
   const W = rect.width;
   const H = rect.height;
@@ -665,12 +660,19 @@ function renderScene(t) {
 
   const audioBoost = loveSong.getAudioEnergy();
 
+  // Advance 3D vortex morphing transition smoothly
+  if (morphProgress < 1.0) {
+    morphProgress = Math.min(1.0, morphProgress + dt * 0.72);
+  }
+  // Exponential cubic spring-out curve for 3D morphing
+  const morphEase = 1.0 - Math.pow(1.0 - morphProgress, 3);
+  const vortexTwist = Math.sin(morphProgress * PI) * 1.55;
+
   const cellW = 6.0;
   const cellH = 8.4;
   const cols = Math.floor(W / cellW);
   const rows = Math.floor(H / cellH);
 
-  // Subtle heartbeat scale when showing the 3D Spider-Kitty Heart
   const beatScale = activeSculpture === 'heart'
     ? 1.0 + 0.032 * Math.sin(t * 3.4) + audioBoost * 0.04
     : 1.0;
@@ -713,7 +715,7 @@ function renderScene(t) {
     }
   }
 
-  // B. Hello Kitty Bow / Butterfly Caustic Wings Behind the 3D Sculpture
+  // B. Hello Kitty Bow / Butterfly Caustic Wings
   const wingFade = Math.max(0, Math.min(1, (t - 2.5) / 3.5));
   if (wingFade > 0.01) {
     const wingChars = ['.', ':', '+', '*', '·'];
@@ -724,7 +726,6 @@ function renderScene(t) {
       if (alpha > 0.08) {
         const sx = cx + wp.x * baseRadiusPx;
         const sy = cy - (wp.y - 0.18) * baseRadiusPx;
-        // Left wing crimson-tinted, right wing Hello Kitty pink-tinted
         ctx.fillStyle = wp.x < 0
           ? `rgba(235, 110, 140, ${Math.min(0.62, alpha).toFixed(3)})`
           : `rgba(248, 175, 210, ${Math.min(0.62, alpha).toFixed(3)})`;
@@ -733,7 +734,7 @@ function renderScene(t) {
     }
   }
 
-  // C. Z-Buffer Grid for the Active 3D Sculpture
+  // C. Z-Buffer Grid with True 3D Particle Vortex Morphing
   const gridSize = cols * rows;
   const zBuf = new Float32Array(gridSize);
   const lumBuf = new Float32Array(gridSize);
@@ -741,21 +742,48 @@ function renderScene(t) {
   const tagBuf = new Int8Array(gridSize);
   zBuf.fill(-9999);
 
-  const activeData = SCULPTURES[activeSculpture] || SCULPTURES.heart;
-  const { P, N, F, ORDER } = activeData;
-  const totalPts = P.length;
+  const srcData = SCULPTURES[fromSculpture] || SCULPTURES.heart;
+  const dstData = SCULPTURES[activeSculpture] || SCULPTURES.heart;
+  const isMorphing = morphProgress < 1.0 && fromSculpture !== activeSculpture;
 
-  for (let i = 0; i < totalPts; i++) {
-    const ord = ORDER[i];
+  for (let i = 0; i < MORPH_COUNT; i++) {
+    const ord = dstData.ORDER[i];
     if (ord > drawProg) continue;
 
-    const pt = P[i];
-    const nm = N[i];
-    const tag = F[i];
+    let px, py, pz, nx, ny, nz, tag;
+    if (!isMorphing) {
+      const pt = dstData.P[i];
+      const nm = dstData.N[i];
+      px = pt[0]; py = pt[1]; pz = pt[2];
+      nx = nm[0]; ny = nm[1]; nz = nm[2];
+      tag = dstData.F[i];
+    } else {
+      const pA = srcData.P[i];
+      const pB = dstData.P[i];
+      const nA = srcData.N[i];
+      const nB = dstData.N[i];
 
-    let rx = cosY * pt[0] + sinY * pt[2];
-    let ry = pt[1];
-    let rz = -sinY * pt[0] + cosY * pt[2];
+      // Interpolate 3D position with mid-flight vortex swirl
+      const lx = pA[0] + (pB[0] - pA[0]) * morphEase;
+      const ly = pA[1] + (pB[1] - pA[1]) * morphEase;
+      const lz = pA[2] + (pB[2] - pA[2]) * morphEase;
+
+      const localTwist = vortexTwist * (0.5 + 0.5 * Math.sin(ly * 2.2));
+      const ct = Math.cos(localTwist);
+      const st = Math.sin(localTwist);
+      px = ct * lx + st * lz;
+      py = ly;
+      pz = -st * lx + ct * lz;
+
+      nx = nA[0] + (nB[0] - nA[0]) * morphEase;
+      ny = nA[1] + (nB[1] - nA[1]) * morphEase;
+      nz = nA[2] + (nB[2] - nA[2]) * morphEase;
+      tag = morphEase < 0.5 ? srcData.F[i] : dstData.F[i];
+    }
+
+    let rx = cosY * px + sinY * pz;
+    let ry = py;
+    let rz = -sinY * px + cosY * pz;
 
     if (userPitchOffset !== 0) {
       const ry2 = cosP * ry - sinP * rz;
@@ -764,9 +792,9 @@ function renderScene(t) {
       rz = rz2;
     }
 
-    let nx = cosY * nm[0] + sinY * nm[2];
-    let ny = nm[1];
-    let nz = -sinY * nm[0] + cosY * nm[2];
+    const rnx = cosY * nx + sinY * nz;
+    const rny = ny;
+    const rnz = -sinY * nx + cosY * nz;
 
     const camZ = 4.2;
     const persp = camZ / Math.max(0.5, camZ - rz * 0.55);
@@ -782,9 +810,9 @@ function renderScene(t) {
       zBuf[cellIdx] = rz;
       tagBuf[cellIdx] = tag;
 
-      const diff = Math.max(0, nx * key[0] + ny * key[1] + nz * key[2]);
-      const rimDot = Math.max(0, nx * rim[0] + ny * rim[1] + nz * rim[2]);
-      const specDot = Math.max(0, nx * halfVec[0] + ny * halfVec[1] + nz * halfVec[2]);
+      const diff = Math.max(0, rnx * key[0] + rny * key[1] + rnz * key[2]);
+      const rimDot = Math.max(0, rnx * rim[0] + rny * rim[1] + rnz * rim[2]);
+      const specDot = Math.max(0, rnx * halfVec[0] + rny * halfVec[1] + rnz * halfVec[2]);
       const spec = Math.pow(specDot, 12);
 
       const edgeDist = drawProg - ord;
@@ -792,13 +820,15 @@ function renderScene(t) {
         ? (1.0 - edgeDist / 0.10) * 0.65
         : 0.0;
 
-      const lum = Math.min(1.0, 0.18 + 0.66 * diff + 0.32 * rimDot + 0.90 * spec + edgeFlash + audioBoost * 0.16);
+      const morphFlash = isMorphing ? Math.sin(morphProgress * PI) * 0.25 : 0.0;
+
+      const lum = Math.min(1.0, 0.18 + 0.66 * diff + 0.32 * rimDot + 0.90 * spec + edgeFlash + morphFlash + audioBoost * 0.16);
       lumBuf[cellIdx] = lum;
-      specBuf[cellIdx] = spec + edgeFlash;
+      specBuf[cellIdx] = spec + edgeFlash + morphFlash;
     }
   }
 
-  // D. Render 3D ASCII Cells with Hello Kitty × Spider-Man Palette
+  // D. Render 3D ASCII Cells
   const phrase = PHRASE_MAP[activeSculpture] || PHRASE_MAP.heart;
   const phraseLen = phrase.length;
   const floorY = cy + 1.24 * baseRadiusPx;
@@ -831,17 +861,14 @@ function renderScene(t) {
       let bl = Math.min(255, b + 10);
 
       if (tag === TAG_PINK) {
-        // Hello Kitty Sakura Blush Pink
         r = Math.min(255, Math.floor(b * 1.08 + 28));
         g = Math.min(255, Math.floor(b * 0.72));
         bl = Math.min(255, Math.floor(b * 0.92 + 18));
       } else if (tag === TAG_CRIMSON) {
-        // Spider-Man Crimson Red
         r = Math.min(255, Math.floor(b * 1.12 + 35));
         g = Math.min(255, Math.floor(b * 0.36));
         bl = Math.min(255, Math.floor(b * 0.52));
       } else if (tag === TAG_GOLD) {
-        // Hello Kitty Golden Button Nose
         r = Math.min(255, Math.floor(b * 1.1 + 30));
         g = Math.min(255, Math.floor(b * 0.92 + 10));
         bl = Math.min(255, Math.floor(b * 0.45));
@@ -850,7 +877,6 @@ function renderScene(t) {
       ctx.fillStyle = `rgb(${r}, ${g}, ${bl})`;
       ctx.fillText(ch, sx, sy);
 
-      // Subtle Floor Reflection
       const distBelowCenter = sy - cy;
       if (distBelowCenter > baseRadiusPx * 0.25) {
         const reflY = floorY + (floorY - sy) * 0.32;
@@ -863,7 +889,7 @@ function renderScene(t) {
     }
   }
 
-  // E. Render Silk Spider-Web Cursor Trail
+  // E. Silk Spider-Web Cursor Trail
   if (WEB_TRAIL.length > 1) {
     ctx.beginPath();
     for (let i = 0; i < WEB_TRAIL.length; i++) {
@@ -872,8 +898,8 @@ function renderScene(t) {
       else ctx.lineTo(pt.x, pt.y);
       pt.life -= 0.035;
     }
-    ctx.strokeStyle = 'rgba(244, 114, 182, 0.28)';
-    ctx.lineWidth = 1.2;
+    ctx.strokeStyle = 'rgba(244, 114, 182, 0.32)';
+    ctx.lineWidth = 1.3;
     ctx.stroke();
 
     for (let i = WEB_TRAIL.length - 1; i >= 0; i--) {
@@ -888,39 +914,186 @@ function renderScene(t) {
 }
 
 // ============================================================================
-// 4. ALL 16 MEMORIES BENTO GALLERY + 8 INTERACTIVE 3D FLIP CARDS
+// 4. ELASTIC SPIDER-WEB & PINK RIBBON PHYSICS STRING (Chapter 2)
+// ============================================================================
+class ElasticWebString {
+  constructor() {
+    this.canvas = document.getElementById('elastic-web-canvas');
+    if (!this.canvas) return;
+    this.ctx = this.canvas.getContext('2d');
+    this.midX = 0.5;
+    this.midY = 0.5;
+    this.vy = 0;
+    this.vx = 0;
+    this.pulsePos = 0;
+
+    this.resize();
+    window.addEventListener('resize', () => this.resize());
+
+    this.canvas.addEventListener('pointermove', (e) => {
+      const r = this.canvas.getBoundingClientRect();
+      const ny = (e.clientY - r.top) / Math.max(1, r.height);
+      const nx = (e.clientX - r.left) / Math.max(1, r.width);
+      this.vy += (ny - this.midY) * 0.38;
+      this.midX = 0.25 + nx * 0.5;
+    });
+
+    this.canvas.addEventListener('click', () => this.pluck(34));
+  }
+
+  resize() {
+    if (!this.canvas) return;
+    const r = this.canvas.parentElement.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    this.canvas.width = Math.floor(r.width * dpr);
+    this.canvas.height = Math.floor(r.height * dpr);
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  pluck(strength = 30) {
+    if (!this.canvas) return;
+    const h = this.canvas.parentElement.getBoundingClientRect().height || 76;
+    this.vy = (strength / h);
+  }
+
+  step(t) {
+    if (!this.canvas) return;
+    const r = this.canvas.parentElement.getBoundingClientRect();
+    const W = r.width;
+    const H = r.height;
+    if (W <= 0 || H <= 0) return;
+
+    // Harmonic spring physics
+    const force = (0.5 - this.midY) * 0.16;
+    this.vy = (this.vy + force) * 0.88;
+    this.midY += this.vy;
+    this.midX += (0.5 - this.midX) * 0.08;
+
+    this.ctx.clearRect(0, 0, W, H);
+
+    const x1 = W * 0.12;
+    const y1 = H * 0.5;
+    const x2 = W * 0.88;
+    const y2 = H * 0.5;
+    const cx = W * this.midX;
+    const cy = H * this.midY;
+
+    // Gradient silk thread from Hello Kitty Pink (Right in RTL) to Spider-Man Crimson (Left)
+    const grad = this.ctx.createLinearGradient(x1, y1, x2, y2);
+    grad.addColorStop(0, '#e11d48');
+    grad.addColorStop(0.5, '#fdf2f8');
+    grad.addColorStop(1, '#f472b6');
+
+    this.ctx.beginPath();
+    this.ctx.moveTo(x1, y1);
+    this.ctx.quadraticCurveTo(cx, cy, x2, y2);
+    this.ctx.strokeStyle = grad;
+    this.ctx.lineWidth = 2.0;
+    this.ctx.stroke();
+
+    // Anchor nodes + traveling light pulse along the quadratic Bezier curve
+    const u = (t * 0.38) % 1.0;
+    const um = 1 - u;
+    const px = um * um * x1 + 2 * um * u * cx + u * u * x2;
+    const py = um * um * y1 + 2 * um * u * cy + u * u * y2;
+
+    this.ctx.fillStyle = '#f472b6';
+    this.ctx.beginPath();
+    this.ctx.arc(x2, y2, 4.5, 0, TAU);
+    this.ctx.fill();
+
+    this.ctx.fillStyle = '#e11d48';
+    this.ctx.beginPath();
+    this.ctx.arc(x1, y1, 4.5, 0, TAU);
+    this.ctx.fill();
+
+    this.ctx.fillStyle = '#ffffff';
+    this.ctx.beginPath();
+    this.ctx.arc(px, py, 3.8, 0, TAU);
+    this.ctx.fill();
+  }
+}
+
+let elasticString = null;
+
+// ============================================================================
+// 5. AUTHENTIC EGYPTIAN ARABIC MEMORIES & REASONS + ADVANCED MOTION SYSTEMS
 // ============================================================================
 const MEMORIES = [
-  { type: 'image', category: 'together', wide: true,  src: 'assets/photo3.jpg',  title: 'إيدك في إيدي',    caption: 'أجمل لحظة وأنا ماسك إيدك في العربية — وعدنا للأبد' },
-  { type: 'image', category: 'together', wide: false, src: 'assets/photo1.jpg',  title: 'من البداية',       caption: 'أحلى وألطف صورة لينا سوا' },
-  { type: 'video', category: 'video',    wide: false, src: 'assets/video1.mp4',  title: 'ضحكنا في العربية', caption: 'فيديو إيدك في إيدي وإحنا بنضحك من قلبنا (اضغطي للصوت)' },
-  { type: 'image', category: 'together', wide: false, src: 'assets/photo2.jpg',  title: 'أحلى وردة ليكِ',   caption: 'الوردة دي علشانك بس إنتي أحلى من كل الورد' },
-  { type: 'image', category: 'together', wide: false, src: 'assets/photo4.jpg',  title: 'الأمان كله',       caption: 'في قربك بحس إن الدنيا كلها ضحكتلي' },
-  { type: 'video', category: 'video',    wide: true,  src: 'assets/video2.mp4',  title: 'خروجة المراجيح',   caption: 'فيديو المراجيح بالليل — وذكريات حلوة مابتتنسيش أبداً (اضغطي للصوت)' },
-  { type: 'image', category: 'together', wide: false, src: 'assets/photo5.jpg',  title: 'وردتين لعيونك',    caption: 'كل وردة بتفكرني بجمال روحك' },
-  { type: 'image', category: 'together', wide: false, src: 'assets/photo6.jpg',  title: 'خطواتنا بالليل',   caption: 'كل مشوار وكل خطوة معاكِ هي حياة' },
-  { type: 'image', category: 'together', wide: false, src: 'assets/photo7.jpg',  title: 'فرحة قلبي',       caption: 'وجودك جنبي بيخلي كل حاجة ليها طعم تاني' },
-  { type: 'image', category: 'together', wide: false, src: 'assets/photo8.jpg',  title: 'معاكِ في كل مكان', caption: 'خطوتي دايماً ماشية مع خطوتك' },
-  { type: 'image', category: 'calls',    wide: false, src: 'assets/photo9.jpg',  title: 'الكاب البينك',     caption: 'أحلى هالو كيتي في الكاب البينك والفلتر العسل' },
-  { type: 'image', category: 'calls',    wide: false, src: 'assets/photo10.jpg', title: 'أجمل ابتسامة',     caption: 'ضحكتك في المكالمة بتنور يومي كله' },
-  { type: 'image', category: 'calls',    wide: false, src: 'assets/photo11.jpg', title: 'نفس النظارة',      caption: 'لما بنطقم بنفس الفلتر سوا' },
-  { type: 'image', category: 'calls',    wide: false, src: 'assets/photo12.jpg', title: 'مكالماتنا بالساعات', caption: 'أحلى وقت في يومي هو الوقت اللي بكلمك فيه' },
-  { type: 'image', category: 'calls',    wide: false, src: 'assets/photo13.jpg', title: 'هزارنا اللي مفيش زيه', caption: 'حتى وإحنا بنهزر بأغرب الفلاتر قمر في عيني' },
-  { type: 'video', category: 'video',    wide: true,  src: 'assets/video3.mp4',  title: 'جنوننا في المكالمات', caption: 'فيديو الفلاتر والضحك اللي من القلب (اضغطي للصوت)' }
+  { type: 'image', category: 'together', wide: true,  src: 'assets/photo3.jpg',  title: 'مسكة إيدك في العربية',   caption: 'أكتر لحظة بحس فيها إن الدنيا كلها ملكي وأنا ماسك إيدك كده' },
+  { type: 'image', category: 'together', wide: false, src: 'assets/photo1.jpg',  title: 'إحنا الاتنين',           caption: 'أحلى صورة لينا سوا.. شبهنا وشبه روحنا' },
+  { type: 'video', category: 'video',    wide: false, src: 'assets/video1.mp4',  title: 'ضحكنا وإيدك في إيدي',    caption: 'شغلي الفيديو واسمعي ضحكتك اللي بالدنيا كلها' },
+  { type: 'image', category: 'together', wide: false, src: 'assets/photo2.jpg',  title: 'وردة لأحلى وردة',        caption: 'الوردة دي كانت ليكي، بس والله إنتي اللي بتحلّي أي ورد' },
+  { type: 'image', category: 'together', wide: false, src: 'assets/photo4.jpg',  title: 'راحتي وأماني',           caption: 'طول ما إيدك في إيدي مبيهمنيش أي حاجة في الدنيا' },
+  { type: 'video', category: 'video',    wide: true,  src: 'assets/video2.mp4',  title: 'خروجة المراجيح بالليل',  caption: 'أنا والبت الهبلة دي بنمرجح.. أحلى ذكريات وأحلى ضحك من القلب' },
+  { type: 'image', category: 'together', wide: false, src: 'assets/photo5.jpg',  title: 'وردتين لعيونك',          caption: 'كل ما أشوف ورد بفتكر ضحكتك وعيونك' },
+  { type: 'image', category: 'together', wide: false, src: 'assets/photo6.jpg',  title: 'تمشيتنا بالليل',         caption: 'حتى وإحنا واقفين بنصور جزمنا في الشارع، كل تفصيلة معاكي ليها طعم' },
+  { type: 'image', category: 'together', wide: false, src: 'assets/photo7.jpg',  title: 'وقفتنا سوا',             caption: 'أحلى صحبة وأحلى حبيبة في الدنيا كلها' },
+  { type: 'image', category: 'together', wide: false, src: 'assets/photo8.jpg',  title: 'خطوتنا واحدة',           caption: 'إن شاء الله نفضل ماشيين سوا في كل طريق طول العمر' },
+  { type: 'image', category: 'calls',    wide: false, src: 'assets/photo9.jpg',  title: 'الكاب البينك والفلتر',   caption: 'بصي العسل في الكاب البينك والشنب.. قمر في كل حالاتك والله' },
+  { type: 'image', category: 'calls',    wide: false, src: 'assets/photo10.jpg', title: 'ضحكتنا في الكول',        caption: 'لما بنفضل فاتحين كول بالساعات ومبنزهقش من بعض أبداً' },
+  { type: 'image', category: 'calls',    wide: false, src: 'assets/photo11.jpg', title: 'نفس النظارة ونفس الهبل', caption: 'لما بنجرب نفس الفلتر ونقعد نضحك على شكلنا' },
+  { type: 'image', category: 'calls',    wide: false, src: 'assets/photo12.jpg', title: 'سهرنا ومكالماتنا',       caption: 'أحلى وقت في يومي كله هو الوقت اللي بشوفك وبكلمك فيه' },
+  { type: 'image', category: 'calls',    wide: false, src: 'assets/photo13.jpg', title: 'أغرب فلتر في التاريخ',   caption: 'حتى وإحنا مبوظين شكلنا بالفلاتر مفيش أحلى من دمك الخفيف' },
+  { type: 'video', category: 'video',    wide: true,  src: 'assets/video3.mp4',  title: 'فيديو الفلاتر والجنون',  caption: 'شغلي الفيديو وشوفي هبلنا وجنوننا في الكول' }
 ];
 
 const REASONS = [
-  { num: '01', title: 'ضحكتك اللي بتخطفني', secret: 'أول ما بتضحكي بنسى أي تعب وأي هم في الدنيا، ضحكتك هي سبب سعادتي.' },
-  { num: '02', title: 'رقتك ودلعك (My Kitty)', secret: 'زيك زي هالو كيتي في رقتك وحلاوة روحك اللي مفيش زيها في الكون كله.' },
-  { num: '03', title: 'إيدك لما بتمسك إيدي', secret: 'لما بمسك إيدك في العربية بحس إني ملكت الدنيا كلها ومش عايز حاجة تانية.' },
-  { num: '04', title: 'جنوننا وهزارنا سوا', secret: 'من المراجيح بالليل للفلاتر المجنونة في المكالمات.. معاكِ بعيش أحلى أيام عمري.' },
-  { num: '05', title: 'عيونك اللي بحبها', secret: 'بشوف في عيونك حنيتك وطيبتك اللي خلوني أتعلق بيكِ كل يوم أكتر.' },
-  { num: '06', title: 'مكالماتنا اللي مبتخلصش', secret: 'صوتك قبل ما أنام وفي كل وقت في يومي هو أكتر حاجة بتطمن قلبي.' },
-  { num: '07', title: 'عفويتك وطيبة قلبك', secret: 'قلبك أبيض وحنين، وبتخليني دايماً عايز أكون أحسن علشانك.' },
-  { num: '08', title: 'لأنك إنتي وبس', secret: 'مش محتاج سبب علشان أحبك.. أنا بحبك علشان إنتي روحي ودنيتي كلها.' }
+  { tag: 'أول حاجة',   title: 'ضحكتك اللي بتخطفني',   secret: 'والله أول ما بتضحكي بنسى أي تعب وأي هم في الدنيا، ضحكتك دي هي اللي بترد فيا الروح.' },
+  { tag: 'تاني حاجة',  title: 'رقتك ودلعك عليا',       secret: 'عاملة زي هالو كيتي بجد في رقتك وحلاوة روحك اللي مفيش زيها في الدنيا.' },
+  { tag: 'تالت حاجة',  title: 'مسكة إيدك في العربية', secret: 'لما بمسك إيدك بحس إني ملكت الدنيا كلها ومش عايز أي حاجة تانية غير إنك تفضلي جمبي.' },
+  { tag: 'رابع حاجة',  title: 'هبلنا وجنوننا سوا',     secret: 'من المراجيح بالليل للفلاتر العجيبة في الكول.. معاكي بطلع كل اللي جوايا وبضحك من قلبي.' },
+  { tag: 'خامس حاجة',  title: 'عيونك اللي بعشقها',    secret: 'بشوف في عيونك حنية وطيبة بيخلوني أتحسد عليكي وأحبك كل يوم أكتر.' },
+  { tag: 'سادس حاجة',  title: 'سهرنا ومكالماتنا',      secret: 'صوتك قبل ما أنام وفي كل تفصيلة في يومي هو أكتر حاجة بتطمن قلبي.' },
+  { tag: 'سابع حاجة',  title: 'قلبك الأبيض وعفويتك',  secret: 'مبتعرفيش تمثلي ولا تتصنعي، عفويتك ودمك الخفيف دول عندي بالدنيا وما فيها.' },
+  { tag: 'ومن الآخر',  title: 'عشان إنتي روحي وبس',    secret: 'مش محتاج أعد أسباب عشان أحبك.. أنا بحبك عشان إنتي بيتي وراحتي ودنيتي كلها.' }
 ];
 
 let currentMemoryIdx = 0;
+
+function bindSpringTiltCards() {
+  document.querySelectorAll('.tilt-card').forEach((card) => {
+    if (card.dataset.tiltBound === '1') return;
+    card.dataset.tiltBound = '1';
+
+    card.addEventListener('pointermove', (e) => {
+      const r = card.getBoundingClientRect();
+      const px = (e.clientX - r.left) / Math.max(1, r.width);
+      const py = (e.clientY - r.top) / Math.max(1, r.height);
+      const rotY = (px - 0.5) * 10;
+      const rotX = (0.5 - py) * 10;
+      card.style.transform = `perspective(900px) rotateX(${rotX.toFixed(2)}deg) rotateY(${rotY.toFixed(2)}deg) translateY(-4px)`;
+      card.style.setProperty('--glare-x', `${(px * 100).toFixed(1)}%`);
+      card.style.setProperty('--glare-y', `${(py * 100).toFixed(1)}%`);
+      card.style.setProperty('--glare-op', '1');
+    });
+
+    card.addEventListener('pointerleave', () => {
+      card.style.transform = '';
+      card.style.setProperty('--glare-op', '0');
+    });
+  });
+}
+
+function observeScrollReveals() {
+  const items = document.querySelectorAll('.reveal-item');
+  if (!('IntersectionObserver' in window)) {
+    items.forEach((el) => el.classList.add('in-view'));
+    return;
+  }
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('in-view');
+      }
+    });
+  }, { threshold: 0.10 });
+
+  items.forEach((el, idx) => {
+    el.style.setProperty('--stagger', `${(idx % 4) * 75}ms`);
+    obs.observe(el);
+  });
+}
 
 function renderBentoGallery(filter = 'all') {
   const grid = document.getElementById('memories-bento-grid');
@@ -929,17 +1102,18 @@ function renderBentoGallery(filter = 'all') {
 
   MEMORIES.forEach((item, idx) => {
     if (filter !== 'all' && item.category !== filter) return;
-    const numStr = String(idx + 1).padStart(2, '0');
+    const num = idx + 1;
     const card = document.createElement('article');
-    card.className = `bento-card${item.wide && filter === 'all' ? ' featured-wide' : ''}`;
+    card.className = `bento-card tilt-card reveal-item${item.wide && filter === 'all' ? ' featured-wide' : ''}`;
 
     const mediaHTML = item.type === 'video'
       ? `<video src="${item.src}" autoplay muted loop playsinline preload="metadata"></video>
-         <span class="bento-tag video-tag" dir="rtl">فيديو ${numStr} • اضغطي للصوت</span>`
+         <span class="bento-tag video-tag" dir="rtl">فيديو • دوسي عشان تسمعي الصوت</span>`
       : `<img src="${item.src}" alt="${item.title}" loading="lazy" />
-         <span class="bento-tag" dir="ltr">PHOTO // ${numStr}</span>`;
+         <span class="bento-tag" dir="rtl">ذكرى ${num}</span>`;
 
     card.innerHTML = `
+      <div class="card-glare"></div>
       <div class="bento-media">${mediaHTML}</div>
       <div class="bento-info" dir="rtl">
         <div class="bento-title">${item.title}</div>
@@ -949,18 +1123,21 @@ function renderBentoGallery(filter = 'all') {
     card.addEventListener('click', () => openSpotlight(idx));
     grid.appendChild(card);
   });
+
+  bindSpringTiltCards();
+  observeScrollReveals();
 }
 
 function renderReasonsGrid() {
   const box = document.getElementById('reasons-grid');
   if (!box) return;
   box.innerHTML = REASONS.map((r) => `
-    <div class="flip-card">
+    <div class="flip-card reveal-item">
       <div class="flip-inner">
         <div class="flip-front">
-          <span class="flip-num" dir="ltr">REASON // ${r.num}</span>
+          <span class="flip-num">${r.tag}</span>
           <h4>${r.title}</h4>
-          <span class="flip-hint">اضغطي لكشف السر</span>
+          <span class="flip-hint">دوسي ع الكارت</span>
         </div>
         <div class="flip-back">
           <p>« ${r.secret} »</p>
@@ -974,10 +1151,16 @@ function renderReasonsGrid() {
       card.classList.toggle('flipped');
     });
   });
+
+  observeScrollReveals();
 }
 
 function setSculptureMode(mode) {
-  activeSculpture = mode;
+  if (mode !== activeSculpture) {
+    fromSculpture = activeSculpture;
+    activeSculpture = mode;
+    morphProgress = 0.0; // Trigger smooth 3D vortex particle morph!
+  }
   userYawOffset = 0;
   userPitchOffset = 0;
   if (animTime < DRAW_END_T) {
@@ -1005,10 +1188,10 @@ function setSculptureMode(mode) {
   }
 
   const captions = {
-    heart:  'قلب واحد بيجمع هالو كيتي وسبايدر مان',
-    kitty:  'لأحلى وأرق هالو كيتي في دنيتي',
-    spidey: 'سبايدر مان دايماً جمب هالو كيتي',
-    rose:   'أجمل وردة لأغلى إنسانة في قلبي'
+    heart:  'أحلى حاجة حصلتلي في حياتي',
+    kitty:  'لأحلى هالو كيتي في دنيتي كلها',
+    spidey: 'سبايدر مان بتاعك دايماً جمبك',
+    rose:   'أحلى وردة لأحلى عيون'
   };
   if (subText) subText.textContent = captions[mode] || captions.heart;
 }
@@ -1024,8 +1207,7 @@ function openSpotlight(index) {
   box.innerHTML = '';
   cap.textContent = `${item.title} — ${item.caption}`;
   if (idxLabel) {
-    const numStr = String(currentMemoryIdx + 1).padStart(2, '0');
-    idxLabel.textContent = `MEMORY // ${numStr} OF ${MEMORIES.length}`;
+    idxLabel.textContent = `ذكرى ${currentMemoryIdx + 1} من ${MEMORIES.length}`;
   }
 
   if (item.type === 'video') {
@@ -1064,13 +1246,17 @@ function tickFrame(now) {
     animTime += dt;
   }
 
-  renderScene(animTime);
+  renderScene(animTime, dt);
+  if (elasticString) elasticString.step(animTime);
   requestAnimationFrame(tickFrame);
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+  elasticString = new ElasticWebString();
   renderBentoGallery('all');
   renderReasonsGrid();
+  bindSpringTiltCards();
+  observeScrollReveals();
 
   const SECRET_PASSCODE = 'l0vey0u@';
   const introOverlay = document.getElementById('intro-overlay');
@@ -1133,19 +1319,20 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }, { once: true });
 
-  // 3D Sculpture Switcher Buttons
+  // 3D Vortex Morphing Sculpture Buttons
   document.getElementById('mode-heart-btn').addEventListener('click', () => setSculptureMode('heart'));
   document.getElementById('mode-kitty-btn').addEventListener('click', () => setSculptureMode('kitty'));
   document.getElementById('mode-spidey-btn').addEventListener('click', () => setSculptureMode('spidey'));
   document.getElementById('mode-rose-btn').addEventListener('click', () => setSculptureMode('rose'));
 
-  // Interactive Spider-Web Heart Bond Button in Chapter 2
+  // Pluck Elastic Spider-Web String Button
   const shootWebBtn = document.getElementById('shoot-web-btn');
   const webBondMsg = document.getElementById('web-bond-msg');
   if (shootWebBtn && webBondMsg) {
     shootWebBtn.addEventListener('click', () => {
+      if (elasticString) elasticString.pluck(38);
       webBondMsg.classList.add('visible');
-      shootWebBtn.textContent = 'قلوبنا مربوطة ببعض للأبد';
+      shootWebBtn.textContent = 'قلوبنا مربوطة ببعض طول العمر';
     });
   }
 
@@ -1166,12 +1353,13 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Love Letter Modal
+  // Authentic Egyptian Arabic Love Letter Modal
   const LOVE_LETTER_TEXT =
-    'حبيبتي وأجمل هالو كيتي في دنيتي.. ' +
-    'حبيت أعملك حاجة مختلفة تشبهنا إحنا الاتنين وتشبه كل تفصيلة حلوة ما بينا. ' +
-    'من أول ضحكتنا في العربية، وخروجتنا على المراجيح بالليل، والورد، لحد مكالماتنا بالساعات والفلاتر اللي بنضحك بيها من قلبنا. ' +
-    'إنتي أحلى حاجة حصلتلي، وهفضل دايماً جمبك وسندك، وبحبك النهارده وبكرة وطول العمر.';
+    'بصي بقى يا ستي.. أنا قعدت أعملك الموقع ده تفصيلة تفصيلة عشان يطلع شبهنا إحنا الاتنين، ' +
+    'وعشان كل ما تفتحيه تفتكري قد إيه إنتي فارقة في حياتي. ' +
+    'من أول قعدتنا في العربية ومسكة إيدك اللي بالدنيا، لخروجة المراجيح بالليل وهبلنا، ' +
+    'لحد مكالماتنا بالساعات والفلاتر العجيبة اللي بنفضل نضحك عليها من قلبنا. ' +
+    'والله العظيم إنتي أحلى وأغلى حاجة حصلتلي، وربنا يديمك في حياتي وما يحرمنيش من ضحكتك ولا من وجودك جمبي أبداً.. بحبك أوي.';
   let typewriterTimer = null;
 
   const letterModal = document.getElementById('letter-modal');
@@ -1191,7 +1379,7 @@ window.addEventListener('DOMContentLoaded', () => {
       } else {
         clearInterval(typewriterTimer);
       }
-    }, 30);
+    }, 28);
   }
 
   if (openLetterBtn) openLetterBtn.addEventListener('click', openLoveLetter);

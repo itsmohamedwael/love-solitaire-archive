@@ -548,11 +548,66 @@ html, body {
 
 .section-tag {
   display: inline-block;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.24em;
+  font-family: var(--font-heading-ar);
+  font-size: 12.5px;
+  font-weight: 700;
   color: var(--kitty-pink);
-  margin-bottom: 10px;
+  background: rgba(244, 114, 182, 0.12);
+  border: 1px solid rgba(244, 114, 182, 0.28);
+  padding: 4px 14px;
+  border-radius: 999px;
+  margin-bottom: 12px;
+}
+
+/* Interactive Elastic Spider-Web Physics String Canvas */
+.elastic-web-wrapper {
+  width: 100%;
+  height: 76px;
+  margin: -18px 0 14px 0;
+  position: relative;
+  cursor: pointer;
+}
+
+.elastic-web-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* 3D Spring Tilt & Specular Glare Overlay */
+.tilt-card {
+  position: relative;
+  overflow: hidden;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.card-glare {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  background: radial-gradient(
+    circle 260px at var(--glare-x, 50%) var(--glare-y, 50%),
+    rgba(255, 230, 242, 0.14),
+    transparent 70%
+  );
+  opacity: var(--glare-op, 0);
+  transition: opacity 0.3s ease;
+}
+
+/* Scroll-Driven Staggered 3D Reveal Choreography */
+.reveal-item {
+  opacity: 0;
+  transform: translate3d(0, 42px, -30px) scale(0.96);
+  transition:
+    opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1) var(--stagger, 0ms),
+    transform 0.85s cubic-bezier(0.16, 1, 0.3, 1) var(--stagger, 0ms);
+}
+
+.reveal-item.in-view {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
 }
 
 .section-title {
