@@ -1,10 +1,11 @@
 /**
- * app.js — Hello Kitty × Spider-Man Interactive Experience
- * Implements:
- * 1. 3D Point-Cloud Vortex Morphing Engine across 4 Sculptures (Heart, Hello Kitty, Spider-Man, Rose)
- * 2. Elastic Verlet/Spring Spider-Web String Physics Canvas
- * 3. Spring-Damped 3D Card Tilt & Specular Glare Tracking + Staggered 3D Scroll Reveals
- * 4. Authentic Egyptian Arabic (عامية مصرية) Copy & Full Song ("مين يعيشك — محمد رحمه") with 5.5s Fade-In
+ * app.js — 5-Scene Interactive "Hello Kitty × Spider-Man" Love Experience
+ * - Scene 1: 3D Open-Center Tubular Heart (100% hollow center around "بحبك", zero text overlap!)
+ *            + Vortex 3D Particle Morphing into Hello Kitty, Spider-Man & Blooming Rose
+ * - Scene 2: Couple Duality (Hello Kitty × Spider-Man) + Live Elastic Web String Physics
+ * - Scene 3: All 16 Memories Bento Showcase (13 Photos + 3 Live Videos with Audio)
+ * - Scene 4: 8 Interactive 3D Flip Cards in Authentic Egyptian Arabic
+ * - Scene 5: Grand Finale Live Typewriter Love Letter Page
  */
 
 const PI = Math.PI;
@@ -15,7 +16,7 @@ const TAG_PINK = 1;
 const TAG_CRIMSON = 2;
 const TAG_GOLD = 3;
 
-const DRAW_END_T = 7.2;
+const DRAW_END_T = 6.5;
 const MORPH_COUNT = 12000;
 
 function norm3(v) {
@@ -23,7 +24,6 @@ function norm3(v) {
   return [v[0] / len, v[1] / len, v[2] / len];
 }
 
-// Resample any 3D point cloud to exact MORPH_COUNT points so any sculpture can smoothly morph into any other!
 function normalizePointCloud(raw) {
   const srcLen = raw.P.length;
   const P = new Array(MORPH_COUNT);
@@ -32,7 +32,6 @@ function normalizePointCloud(raw) {
   const ORDER = new Float32Array(MORPH_COUNT);
 
   for (let i = 0; i < MORPH_COUNT; i++) {
-    // Deterministic stratified index mapping
     const idx = Math.floor((i * srcLen) / MORPH_COUNT) % srcLen;
     P[i] = raw.P[idx];
     N[i] = raw.N[idx];
@@ -43,7 +42,7 @@ function normalizePointCloud(raw) {
 }
 
 // ============================================================================
-// 1A. 3D SPIDER-KITTY DUAL HEART SCULPTURE
+// 1A. 3D OPEN-CENTER TUBULAR HEART SCULPTURE (100% Pure Black Center Around "بحبك"!)
 // ============================================================================
 function buildHeartGeometry() {
   const P = [];
@@ -51,88 +50,65 @@ function buildHeartGeometry() {
   const F = [];
   const ORDER = [];
 
-  function addPt(pt, n, tag) {
-    const nn = norm3(n);
-    P.push(pt);
-    N.push(nn);
-    F.push(tag);
-    const ord = Math.max(0, Math.min(1.7, ((pt[1] + 1.15) / 2.45) * 1.7));
-    ORDER.push(ord);
+  function heartCenterline(u) {
+    const sinU = Math.sin(u);
+    const x = 1.18 * (sinU * sinU * sinU);
+    const y = 0.22 + (0.94 * Math.cos(u) - 0.36 * Math.cos(2 * u) - 0.15 * Math.cos(3 * u) - 0.06 * Math.cos(4 * u));
+    return [x, y];
   }
 
-  const uSteps = 150;
-  const vSteps = 78;
+  const uSteps = 260;
+  const vSteps = 44;
+  const rTube = 0.165;
+
   for (let i = 0; i < uSteps; i++) {
     const u = (TAU * i) / uSteps;
-    const cosU = Math.cos(u);
-    const sinU = Math.sin(u);
+    const [cx, cy] = heartCenterline(u);
 
-    for (let j = 1; j < vSteps; j++) {
-      const v = (PI * j) / vSteps;
+    // Numerical tangent along the heart curve in XY plane
+    const eps = 0.005;
+    const [nx1, ny1] = heartCenterline(u + eps);
+    const [nx0, ny0] = heartCenterline(u - eps);
+    const tx = nx1 - nx0;
+    const ty = ny1 - ny0;
+    const tLen = Math.hypot(tx, ty) || 1.0;
+
+    // Outward in-plane normal perpendicular to the heart curve
+    const inPlaneNx = -ty / tLen;
+    const inPlaneNy = tx / tLen;
+
+    // Draw order: 0.0 at bottom tip (u = PI) -> 1.65 at top cleft (u = 0 or TAU)
+    const distFromBottom = Math.abs(u - PI) / PI; // 0 at bottom tip, 1 at top cleft
+    const ord = (1.0 - distFromBottom) * 1.65;
+
+    // Taper tube slightly at the sharp bottom tip & top cleft for sculptural elegance
+    const taper = 0.72 + 0.28 * Math.sin(distFromBottom * PI);
+    const rt = rTube * taper;
+
+    for (let j = 0; j < vSteps; j++) {
+      const v = (TAU * j) / vSteps;
+      const cosV = Math.cos(v);
       const sinV = Math.sin(v);
-      const sinV3 = sinV * sinV * sinV;
 
-      const rawX = 16 * sinV3 * cosU;
-      const rawY = 13 * Math.cos(v) - 5 * Math.cos(2 * v) - 2 * Math.cos(3 * v) - Math.cos(4 * v);
-      const rawZ = 9.5 * sinV3 * sinU;
+      const px = cx + rt * cosV * inPlaneNx;
+      const py = cy + rt * cosV * inPlaneNy;
+      const pz = rt * sinV * 1.28;
 
-      const px = rawX * 0.072;
-      const py = rawY * 0.072 + 0.18;
-      const pz = rawZ * 0.072;
+      const normVec = norm3([cosV * inPlaneNx, cosV * inPlaneNy, sinV]);
 
-      let tag = TAG_PINK;
+      // Left arch (px < 0): Spider-Man Crimson with subtle ivory web rings;
+      // Right arch (px >= 0): Hello Kitty Blush Pink & Ivory!
+      let tag;
       if (px < -0.02) {
-        const webLine = (i % 10 === 0) || (j % 9 === 0);
-        tag = webLine ? TAG_IVORY : TAG_CRIMSON;
+        tag = (i % 12 === 0 || j % 11 === 0) ? TAG_IVORY : TAG_CRIMSON;
       } else {
-        tag = (i + j) % 5 === 0 ? TAG_IVORY : TAG_PINK;
+        tag = (i + j) % 6 === 0 ? TAG_IVORY : TAG_PINK;
       }
 
-      addPt([px, py, pz], [px, py - 0.18, pz * 1.3], tag);
-    }
-  }
-
-  // Signature 3D Hello Kitty Bow on the Upper-Right Lobe of the Heart
-  const bowCx = 0.62;
-  const bowCy = 0.88;
-  const bowCz = 0.42;
-  const tilt = -0.28;
-  const cosT = Math.cos(tilt);
-  const sinT = Math.sin(tilt);
-
-  function addBowPt(lx, ly, lz, nx, ny, nz, tag = TAG_PINK) {
-    const rx2 = lx * cosT - ly * sinT;
-    const ry2 = lx * sinT + ly * cosT;
-    addPt([bowCx + rx2, bowCy + ry2, bowCz + lz], [nx, ny, nz], tag);
-  }
-
-  for (let i = 0; i < 28; i++) {
-    const u = (TAU * i) / 28;
-    for (let j = 1; j < 14; j++) {
-      const v = (PI * j) / 14;
-      const rK = 0.13;
-      addBowPt(
-        rK * Math.sin(v) * Math.cos(u),
-        rK * Math.cos(v),
-        rK * Math.sin(v) * Math.sin(u),
-        Math.sin(v) * Math.cos(u),
-        Math.cos(v),
-        Math.sin(v) * Math.sin(u),
-        TAG_CRIMSON
-      );
-    }
-  }
-
-  for (const bSide of [-1, 1]) {
-    for (let uIdx = 0; uIdx <= 28; uIdx++) {
-      const s = uIdx / 28;
-      const loopX = bSide * (0.09 + s * 0.34);
-      const loopH = 0.08 + Math.sin(s * PI * 0.84) * 0.21;
-      const loopD = 0.09 * Math.sin(s * PI);
-      for (let vIdx = 0; vIdx < 24; vIdx++) {
-        const a = (TAU * vIdx) / 24;
-        addBowPt(loopX, loopH * Math.sin(a), loopD * Math.cos(a), bSide * 0.3, Math.sin(a), Math.cos(a) + 0.5, TAG_PINK);
-      }
+      P.push([px, py, pz]);
+      N.push(normVec);
+      F.push(tag);
+      ORDER.push(ord);
     }
   }
 
@@ -408,12 +384,12 @@ function buildButterflyWings() {
     const th = (TAU * i) / steps;
     const sin2 = Math.abs(Math.sin(2 * th));
     if (sin2 < 0.14) continue;
-    const r = 0.52 + 1.38 * Math.pow(sin2, 0.62);
+    const r = 0.56 + 1.38 * Math.pow(sin2, 0.62);
     const wx = r * Math.cos(th) * 1.15;
-    const wy = 0.42 + r * Math.sin(th) * 0.78;
+    const wy = 0.34 + r * Math.sin(th) * 0.76;
 
-    const distFromCenter = Math.hypot(wx, wy);
-    if (distFromCenter < 0.90) continue;
+    const distFromCenter = Math.hypot(wx, wy - 0.2);
+    if (distFromCenter < 0.98) continue;
 
     for (let k = -1; k <= 1; k++) {
       pts.push({
@@ -427,7 +403,7 @@ function buildButterflyWings() {
   return pts;
 }
 
-function buildAmbientDust(count = 260) {
+function buildAmbientDust(count = 240) {
   const dust = [];
   const chars = ['.', '·', ':', '+'];
   for (let i = 0; i < count; i++) {
@@ -451,10 +427,9 @@ const SCULPTURES = {
 const WING_DATA = buildButterflyWings();
 const DUST_DATA = buildAmbientDust();
 
-// Morphing State Engine (Vortex Spring Interpolation)
 let fromSculpture = 'heart';
 let activeSculpture = 'heart';
-let morphProgress = 1.0; // 0.0 -> 1.0 during smooth 3D particle morphing
+let morphProgress = 1.0;
 
 // ============================================================================
 // 2. AUDIO ENGINE (Full Song: Mohamed Rahma - Meen Ye3ayeshak, 5.5s Fade-In)
@@ -588,6 +563,7 @@ const SHADE_CHARS = ' .,:;+i1tfLCG08@';
 
 function resizeCanvas() {
   const rect = canvas.parentElement.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) return;
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   canvas.width = Math.floor(rect.width * dpr);
   canvas.height = Math.floor(rect.height * dpr);
@@ -599,7 +575,7 @@ resizeCanvas();
 
 const visualPane = document.getElementById('visual-pane');
 visualPane.addEventListener('pointerdown', (e) => {
-  if (e.target.closest('.sculpture-switcher') || e.target.closest('.scroll-down-hint')) return;
+  if (e.target.closest('.scene1-bottom-hud')) return;
   isDragging = true;
   dragStartX = e.clientX;
   dragStartY = e.clientY;
@@ -614,7 +590,7 @@ visualPane.addEventListener('pointermove', (e) => {
   targetLightY = (ly / Math.max(1, rect.height) - 0.5) * 0.42;
 
   WEB_TRAIL.push({ x: lx, y: ly, life: 1.0 });
-  if (WEB_TRAIL.length > 28) WEB_TRAIL.shift();
+  if (WEB_TRAIL.length > 26) WEB_TRAIL.shift();
 
   if (!isDragging) return;
   const dx = e.clientX - dragStartX;
@@ -633,11 +609,10 @@ function spinAngle(t) {
   if (activeSculpture === 'kitty' || activeSculpture === 'spidey') {
     return Math.sin(t * 0.6) * 0.52;
   }
-  return (TAU * Math.max(t - DRAW_END_T - 0.5, 0)) / 28.0;
+  return (TAU * Math.max(t - DRAW_END_T - 0.5, 0)) / 30.0;
 }
 
 function lightsAt(t) {
-  // Spring-damped cursor light tracking
   smoothLightX += (targetLightX - smoothLightX) * 0.08;
   smoothLightY += (targetLightY - smoothLightY) * 0.08;
   const a = t * 0.25;
@@ -654,32 +629,31 @@ function renderScene(t, dt) {
   const rect = canvas.parentElement.getBoundingClientRect();
   const W = rect.width;
   const H = rect.height;
+  if (W <= 0 || H <= 0) return;
 
-  ctx.fillStyle = '#060508';
+  ctx.fillStyle = '#050408';
   ctx.fillRect(0, 0, W, H);
 
   const audioBoost = loveSong.getAudioEnergy();
 
-  // Advance 3D vortex morphing transition smoothly
   if (morphProgress < 1.0) {
     morphProgress = Math.min(1.0, morphProgress + dt * 0.72);
   }
-  // Exponential cubic spring-out curve for 3D morphing
   const morphEase = 1.0 - Math.pow(1.0 - morphProgress, 3);
   const vortexTwist = Math.sin(morphProgress * PI) * 1.55;
 
-  const cellW = 6.0;
-  const cellH = 8.4;
+  const cellW = 5.8;
+  const cellH = 8.2;
   const cols = Math.floor(W / cellW);
   const rows = Math.floor(H / cellH);
 
   const beatScale = activeSculpture === 'heart'
-    ? 1.0 + 0.032 * Math.sin(t * 3.4) + audioBoost * 0.04
+    ? 1.0 + 0.025 * Math.sin(t * 3.2) + audioBoost * 0.03
     : 1.0;
 
-  const baseRadiusPx = Math.min(W, H) * 0.275 * beatScale;
+  const baseRadiusPx = Math.min(W, H) * 0.235 * beatScale;
   const cx = W * 0.5;
-  const cy = H * 0.50;
+  const cy = H * 0.44;
 
   const drawProg = Math.min(1.75, (t / DRAW_END_T) * 1.70);
 
@@ -693,7 +667,7 @@ function renderScene(t, dt) {
   const { key, rim } = lightsAt(t);
   const halfVec = norm3([key[0], key[1], key[2] + 1.0]);
 
-  ctx.font = '500 8.5px "JetBrains Mono", monospace';
+  ctx.font = '500 8.2px "JetBrains Mono", monospace';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
@@ -701,40 +675,42 @@ function renderScene(t, dt) {
   for (let i = 0; i < DUST_DATA.length; i++) {
     const d = DUST_DATA[i];
     const twinkle = 0.5 + 0.5 * Math.sin(t * d.speed * 1.5 + d.phase);
-    const alpha = twinkle * (0.18 + 0.22 * audioBoost);
+    const alpha = twinkle * (0.16 + 0.20 * audioBoost);
 
     if (alpha > 0.10) {
       const sx = cx + d.x * baseRadiusPx;
       const sy = cy - (d.y - 0.18) * baseRadiusPx;
-      if (sx > 10 && sx < W - 10 && sy > 10 && sy < H - 15) {
+      if (sx > 10 && sx < W - 10 && sy > 10 && sy < H - 80) {
         ctx.fillStyle = i % 2 === 0
-          ? `rgba(244, 114, 182, ${Math.min(0.65, alpha).toFixed(3)})`
-          : `rgba(225, 29, 72, ${Math.min(0.65, alpha).toFixed(3)})`;
+          ? `rgba(244, 114, 182, ${Math.min(0.62, alpha).toFixed(3)})`
+          : `rgba(225, 29, 72, ${Math.min(0.62, alpha).toFixed(3)})`;
         ctx.fillText(d.char, sx, sy);
       }
     }
   }
 
-  // B. Hello Kitty Bow / Butterfly Caustic Wings
-  const wingFade = Math.max(0, Math.min(1, (t - 2.5) / 3.5));
+  // B. Bow / Butterfly Caustic Wings Behind the 3D Sculpture
+  const wingFade = Math.max(0, Math.min(1, (t - 2.2) / 3.2));
   if (wingFade > 0.01) {
     const wingChars = ['.', ':', '+', '*', '·'];
     for (let i = 0; i < WING_DATA.length; i++) {
       const wp = WING_DATA[i];
       const shimmer = 0.45 + 0.55 * Math.sin(t * 1.5 - wp.u * 8.0 + wp.phase);
-      const alpha = wingFade * shimmer * (0.30 + 0.24 * audioBoost);
+      const alpha = wingFade * shimmer * (0.28 + 0.22 * audioBoost);
       if (alpha > 0.08) {
         const sx = cx + wp.x * baseRadiusPx;
         const sy = cy - (wp.y - 0.18) * baseRadiusPx;
-        ctx.fillStyle = wp.x < 0
-          ? `rgba(235, 110, 140, ${Math.min(0.62, alpha).toFixed(3)})`
-          : `rgba(248, 175, 210, ${Math.min(0.62, alpha).toFixed(3)})`;
-        ctx.fillText(wingChars[i % wingChars.length], sx, sy);
+        if (sy < H - 80) {
+          ctx.fillStyle = wp.x < 0
+            ? `rgba(235, 110, 140, ${Math.min(0.58, alpha).toFixed(3)})`
+            : `rgba(248, 175, 210, ${Math.min(0.58, alpha).toFixed(3)})`;
+          ctx.fillText(wingChars[i % wingChars.length], sx, sy);
+        }
       }
     }
   }
 
-  // C. Z-Buffer Grid with True 3D Particle Vortex Morphing
+  // C. Z-Buffer Grid with 3D Vortex Morphing
   const gridSize = cols * rows;
   const zBuf = new Float32Array(gridSize);
   const lumBuf = new Float32Array(gridSize);
@@ -763,7 +739,6 @@ function renderScene(t, dt) {
       const nA = srcData.N[i];
       const nB = dstData.N[i];
 
-      // Interpolate 3D position with mid-flight vortex swirl
       const lx = pA[0] + (pB[0] - pA[0]) * morphEase;
       const ly = pA[1] + (pB[1] - pA[1]) * morphEase;
       const lz = pA[2] + (pB[2] - pA[2]) * morphEase;
@@ -803,7 +778,7 @@ function renderScene(t, dt) {
 
     const gx = Math.floor(sx / cellW);
     const gy = Math.floor(sy / cellH);
-    if (gx < 1 || gx >= cols - 1 || gy < 1 || gy >= rows - 1) continue;
+    if (gx < 1 || gx >= cols - 1 || gy < 1 || gy >= rows - 10) continue;
 
     const cellIdx = gy * cols + gx;
     if (rz > zBuf[cellIdx]) {
@@ -822,18 +797,18 @@ function renderScene(t, dt) {
 
       const morphFlash = isMorphing ? Math.sin(morphProgress * PI) * 0.25 : 0.0;
 
-      const lum = Math.min(1.0, 0.18 + 0.66 * diff + 0.32 * rimDot + 0.90 * spec + edgeFlash + morphFlash + audioBoost * 0.16);
+      const lum = Math.min(1.0, 0.16 + 0.66 * diff + 0.32 * rimDot + 0.92 * spec + edgeFlash + morphFlash + audioBoost * 0.15);
       lumBuf[cellIdx] = lum;
       specBuf[cellIdx] = spec + edgeFlash + morphFlash;
     }
   }
 
-  // D. Render 3D ASCII Cells
+  // D. Render High-Contrast 3D ASCII Cells
   const phrase = PHRASE_MAP[activeSculpture] || PHRASE_MAP.heart;
   const phraseLen = phrase.length;
-  const floorY = cy + 1.24 * baseRadiusPx;
+  const floorY = cy + 1.22 * baseRadiusPx;
 
-  for (let gy = 1; gy < rows - 1; gy++) {
+  for (let gy = 1; gy < rows - 10; gy++) {
     for (let gx = 1; gx < cols - 1; gx++) {
       const cellIdx = gy * cols + gx;
       if (zBuf[cellIdx] === -9999) continue;
@@ -846,26 +821,26 @@ function renderScene(t, dt) {
       const sy = (gy + 0.5) * cellH;
 
       let ch;
-      if (spec > 0.64) {
+      if (spec > 0.65) {
         ch = ['@', '#', 'W', 'M', '$'][(gx + gy) % 5];
-      } else if (lum > 0.50) {
+      } else if (lum > 0.56) {
         ch = phrase[(gx * 3 + gy * 7) % phraseLen];
       } else {
         const sIdx = Math.min(SHADE_CHARS.length - 1, Math.max(1, Math.floor(lum * SHADE_CHARS.length)));
         ch = SHADE_CHARS[sIdx];
       }
 
-      const b = Math.floor(75 + lum * 180);
+      const b = Math.floor(72 + lum * 183);
       let r = b;
       let g = b;
       let bl = Math.min(255, b + 10);
 
       if (tag === TAG_PINK) {
-        r = Math.min(255, Math.floor(b * 1.08 + 28));
+        r = Math.min(255, Math.floor(b * 1.08 + 26));
         g = Math.min(255, Math.floor(b * 0.72));
         bl = Math.min(255, Math.floor(b * 0.92 + 18));
       } else if (tag === TAG_CRIMSON) {
-        r = Math.min(255, Math.floor(b * 1.12 + 35));
+        r = Math.min(255, Math.floor(b * 1.12 + 34));
         g = Math.min(255, Math.floor(b * 0.36));
         bl = Math.min(255, Math.floor(b * 0.52));
       } else if (tag === TAG_GOLD) {
@@ -879,9 +854,9 @@ function renderScene(t, dt) {
 
       const distBelowCenter = sy - cy;
       if (distBelowCenter > baseRadiusPx * 0.25) {
-        const reflY = floorY + (floorY - sy) * 0.32;
-        if (reflY > floorY - 10 && reflY < H - 14) {
-          const reflAlpha = Math.max(0.02, Math.min(0.15, lum * 0.16 * (1.0 - (reflY - floorY) / (baseRadiusPx * 0.6))));
+        const reflY = floorY + (floorY - sy) * 0.30;
+        if (reflY > floorY - 10 && reflY < H - 82) {
+          const reflAlpha = Math.max(0.02, Math.min(0.14, lum * 0.15 * (1.0 - (reflY - floorY) / (baseRadiusPx * 0.55))));
           ctx.fillStyle = `rgba(225, 180, 205, ${reflAlpha.toFixed(3)})`;
           ctx.fillText('.', sx, reflY);
         }
@@ -914,7 +889,7 @@ function renderScene(t, dt) {
 }
 
 // ============================================================================
-// 4. ELASTIC SPIDER-WEB & PINK RIBBON PHYSICS STRING (Chapter 2)
+// 4. ELASTIC SPIDER-WEB & PINK RIBBON PHYSICS STRING (Scene 2)
 // ============================================================================
 class ElasticWebString {
   constructor() {
@@ -924,8 +899,6 @@ class ElasticWebString {
     this.midX = 0.5;
     this.midY = 0.5;
     this.vy = 0;
-    this.vx = 0;
-    this.pulsePos = 0;
 
     this.resize();
     window.addEventListener('resize', () => this.resize());
@@ -938,22 +911,23 @@ class ElasticWebString {
       this.midX = 0.25 + nx * 0.5;
     });
 
-    this.canvas.addEventListener('click', () => this.pluck(34));
+    this.canvas.addEventListener('click', () => this.pluck(32));
   }
 
   resize() {
     if (!this.canvas) return;
     const r = this.canvas.parentElement.getBoundingClientRect();
+    if (r.width <= 0 || r.height <= 0) return;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     this.canvas.width = Math.floor(r.width * dpr);
     this.canvas.height = Math.floor(r.height * dpr);
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
-  pluck(strength = 30) {
+  pluck(strength = 28) {
     if (!this.canvas) return;
-    const h = this.canvas.parentElement.getBoundingClientRect().height || 76;
-    this.vy = (strength / h);
+    const h = this.canvas.parentElement.getBoundingClientRect().height || 60;
+    this.vy = strength / h;
   }
 
   step(t) {
@@ -963,7 +937,6 @@ class ElasticWebString {
     const H = r.height;
     if (W <= 0 || H <= 0) return;
 
-    // Harmonic spring physics
     const force = (0.5 - this.midY) * 0.16;
     this.vy = (this.vy + force) * 0.88;
     this.midY += this.vy;
@@ -978,7 +951,6 @@ class ElasticWebString {
     const cx = W * this.midX;
     const cy = H * this.midY;
 
-    // Gradient silk thread from Hello Kitty Pink (Right in RTL) to Spider-Man Crimson (Left)
     const grad = this.ctx.createLinearGradient(x1, y1, x2, y2);
     grad.addColorStop(0, '#e11d48');
     grad.addColorStop(0.5, '#fdf2f8');
@@ -991,7 +963,6 @@ class ElasticWebString {
     this.ctx.lineWidth = 2.0;
     this.ctx.stroke();
 
-    // Anchor nodes + traveling light pulse along the quadratic Bezier curve
     const u = (t * 0.38) % 1.0;
     const um = 1 - u;
     const px = um * um * x1 + 2 * um * u * cx + u * u * x2;
@@ -1017,8 +988,93 @@ class ElasticWebString {
 let elasticString = null;
 
 // ============================================================================
-// 5. AUTHENTIC EGYPTIAN ARABIC MEMORIES & REASONS + ADVANCED MOTION SYSTEMS
+// 5. MULTI-SCENE PAGE CONTROLLER & AUTHENTIC EGYPTIAN ARABIC CONTENT
 // ============================================================================
+const SCENE_INFO = [
+  { prev: 'السابق', next: 'كملي الحكاية: إنتي وأنا' },
+  { prev: 'الرجوع للقلب', next: 'شوفي ذكرياتنا وفيديوهاتنا (16)' },
+  { prev: 'إنتي وأنا', next: 'حاجات بحبها فيكي' },
+  { prev: 'ذكرياتنا', next: 'آخر مفاجأة: رسالتي ليكي' },
+  { prev: 'حاجات بحبها فيكي', next: 'من الأول ↺' }
+];
+
+let currentSceneIdx = 0;
+let typewriterTimer = null;
+
+const LOVE_LETTER_TEXT =
+  'بصي بقى يا ستي.. أنا قعدت أعملك الموقع ده تفصيلة تفصيلة عشان يطلع شبهنا إحنا الاتنين، ' +
+  'وعشان كل ما تفتحيه تفتكري قد إيه إنتي فارقة في حياتي. ' +
+  'من أول قعدتنا في العربية ومسكة إيدك اللي بالدنيا، لخروجة المراجيح بالليل وهبلنا، ' +
+  'لحد مكالماتنا بالساعات والفلاتر العجيبة اللي بنفضل نضحك عليها من قلبنا. ' +
+  'والله العظيم إنتي أحلى وأغلى حاجة حصلتلي، وربنا يديمك في حياتي وما يحرمنيش من ضحكتك ولا من وجودك جمبي أبداً.. بحبك أوي.';
+
+function startLoveLetterTypewriter() {
+  const typewriterEl = document.getElementById('typewriter-text');
+  if (!typewriterEl) return;
+  typewriterEl.textContent = '';
+  if (typewriterTimer) clearInterval(typewriterTimer);
+  let charIdx = 0;
+  typewriterTimer = setInterval(() => {
+    if (charIdx < LOVE_LETTER_TEXT.length) {
+      typewriterEl.textContent += LOVE_LETTER_TEXT[charIdx++];
+    } else {
+      clearInterval(typewriterTimer);
+    }
+  }, 26);
+}
+
+function goToScene(targetIdx) {
+  if (targetIdx >= SCENE_INFO.length) {
+    targetIdx = 0; // Loop back to Scene 1 when clicking Next on Scene 5
+  }
+  if (targetIdx < 0) return;
+
+  currentSceneIdx = targetIdx;
+
+  // Toggle active scene page
+  document.querySelectorAll('.scene-page').forEach((page, idx) => {
+    page.classList.toggle('active', idx === currentSceneIdx);
+  });
+
+  // Update top scene tabs
+  document.querySelectorAll('.scene-tab').forEach((tab, idx) => {
+    tab.classList.toggle('active', idx === currentSceneIdx);
+  });
+
+  // Update bottom progress dots
+  document.querySelectorAll('.s-dot').forEach((dot, idx) => {
+    dot.classList.toggle('active', idx === currentSceneIdx);
+  });
+
+  // Update bottom Prev / Next buttons
+  const prevBtn = document.getElementById('prev-scene-btn');
+  const prevLabel = document.getElementById('prev-scene-label');
+  const nextLabel = document.getElementById('next-scene-label');
+
+  if (prevBtn) prevBtn.disabled = currentSceneIdx === 0;
+  if (prevLabel) prevLabel.textContent = SCENE_INFO[currentSceneIdx].prev;
+  if (nextLabel) nextLabel.textContent = SCENE_INFO[currentSceneIdx].next;
+
+  // Scene-specific triggers
+  if (currentSceneIdx === 0) {
+    setTimeout(resizeCanvas, 50);
+  } else if (currentSceneIdx === 1) {
+    setTimeout(() => {
+      if (elasticString) {
+        elasticString.resize();
+        elasticString.pluck(34);
+      }
+    }, 80);
+  } else if (currentSceneIdx === 2) {
+    document.querySelectorAll('.bento-media video').forEach((v) => {
+      v.muted = true;
+      v.play().catch(() => {});
+    });
+  } else if (currentSceneIdx === 4) {
+    startLoveLetterTypewriter();
+  }
+}
+
 const MEMORIES = [
   { type: 'image', category: 'together', wide: true,  src: 'assets/photo3.jpg',  title: 'مسكة إيدك في العربية',   caption: 'أكتر لحظة بحس فيها إن الدنيا كلها ملكي وأنا ماسك إيدك كده' },
   { type: 'image', category: 'together', wide: false, src: 'assets/photo1.jpg',  title: 'إحنا الاتنين',           caption: 'أحلى صورة لينا سوا.. شبهنا وشبه روحنا' },
@@ -1060,9 +1116,9 @@ function bindSpringTiltCards() {
       const r = card.getBoundingClientRect();
       const px = (e.clientX - r.left) / Math.max(1, r.width);
       const py = (e.clientY - r.top) / Math.max(1, r.height);
-      const rotY = (px - 0.5) * 10;
-      const rotX = (0.5 - py) * 10;
-      card.style.transform = `perspective(900px) rotateX(${rotX.toFixed(2)}deg) rotateY(${rotY.toFixed(2)}deg) translateY(-4px)`;
+      const rotY = (px - 0.5) * 9;
+      const rotX = (0.5 - py) * 9;
+      card.style.transform = `perspective(900px) rotateX(${rotX.toFixed(2)}deg) rotateY(${rotY.toFixed(2)}deg) translateY(-3px)`;
       card.style.setProperty('--glare-x', `${(px * 100).toFixed(1)}%`);
       card.style.setProperty('--glare-y', `${(py * 100).toFixed(1)}%`);
       card.style.setProperty('--glare-op', '1');
@@ -1075,26 +1131,6 @@ function bindSpringTiltCards() {
   });
 }
 
-function observeScrollReveals() {
-  const items = document.querySelectorAll('.reveal-item');
-  if (!('IntersectionObserver' in window)) {
-    items.forEach((el) => el.classList.add('in-view'));
-    return;
-  }
-  const obs = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('in-view');
-      }
-    });
-  }, { threshold: 0.10 });
-
-  items.forEach((el, idx) => {
-    el.style.setProperty('--stagger', `${(idx % 4) * 75}ms`);
-    obs.observe(el);
-  });
-}
-
 function renderBentoGallery(filter = 'all') {
   const grid = document.getElementById('memories-bento-grid');
   if (!grid) return;
@@ -1104,7 +1140,7 @@ function renderBentoGallery(filter = 'all') {
     if (filter !== 'all' && item.category !== filter) return;
     const num = idx + 1;
     const card = document.createElement('article');
-    card.className = `bento-card tilt-card reveal-item${item.wide && filter === 'all' ? ' featured-wide' : ''}`;
+    card.className = `bento-card tilt-card${item.wide && filter === 'all' ? ' featured-wide' : ''}`;
 
     const mediaHTML = item.type === 'video'
       ? `<video src="${item.src}" autoplay muted loop playsinline preload="metadata"></video>
@@ -1125,14 +1161,13 @@ function renderBentoGallery(filter = 'all') {
   });
 
   bindSpringTiltCards();
-  observeScrollReveals();
 }
 
 function renderReasonsGrid() {
   const box = document.getElementById('reasons-grid');
   if (!box) return;
   box.innerHTML = REASONS.map((r) => `
-    <div class="flip-card reveal-item">
+    <div class="flip-card">
       <div class="flip-inner">
         <div class="flip-front">
           <span class="flip-num">${r.tag}</span>
@@ -1151,15 +1186,13 @@ function renderReasonsGrid() {
       card.classList.toggle('flipped');
     });
   });
-
-  observeScrollReveals();
 }
 
 function setSculptureMode(mode) {
   if (mode !== activeSculpture) {
     fromSculpture = activeSculpture;
     activeSculpture = mode;
-    morphProgress = 0.0; // Trigger smooth 3D vortex particle morph!
+    morphProgress = 0.0;
   }
   userYawOffset = 0;
   userPitchOffset = 0;
@@ -1179,19 +1212,21 @@ function setSculptureMode(mode) {
     if (el) el.classList.toggle('active', k === mode);
   });
 
+  // Only show center "بحبك" inside the hollow center of the 3D Open Heart;
+  // hide it on filled 3D sculptures (Kitty, Spidey, Rose) so text NEVER overlaps the ASCII art!
   const coreOverlay = document.getElementById('ring-core-overlay');
-  const subText = document.getElementById('core-sub-text');
-  if (mode === 'kitty' || mode === 'spidey') {
-    coreOverlay.classList.add('lowered');
+  if (mode === 'heart') {
+    coreOverlay.classList.remove('hidden-for-sculpture');
   } else {
-    coreOverlay.classList.remove('lowered');
+    coreOverlay.classList.add('hidden-for-sculpture');
   }
 
+  const subText = document.getElementById('core-sub-text');
   const captions = {
-    heart:  'أحلى حاجة حصلتلي في حياتي',
-    kitty:  'لأحلى هالو كيتي في دنيتي كلها',
-    spidey: 'سبايدر مان بتاعك دايماً جمبك',
-    rose:   'أحلى وردة لأحلى عيون'
+    heart:  'أحلى حاجة حصلتلي في حياتي — دوسي وجربي تغيري الشكل',
+    kitty:  'هالو كيتي بتاعتك مرسومة مخصوص عشانك',
+    spidey: 'سبايدر مان بتاعك دايماً جمبك وفي ضهرك',
+    rose:   'وردة لعيونك الحلوين اللي مفيش زيهم'
   };
   if (subText) subText.textContent = captions[mode] || captions.heart;
 }
@@ -1246,8 +1281,11 @@ function tickFrame(now) {
     animTime += dt;
   }
 
-  renderScene(animTime, dt);
-  if (elasticString) elasticString.step(animTime);
+  if (currentSceneIdx === 0) {
+    renderScene(animTime, dt);
+  } else if (currentSceneIdx === 1 && elasticString) {
+    elasticString.step(animTime);
+  }
   requestAnimationFrame(tickFrame);
 }
 
@@ -1256,7 +1294,6 @@ window.addEventListener('DOMContentLoaded', () => {
   renderBentoGallery('all');
   renderReasonsGrid();
   bindSpringTiltCards();
-  observeScrollReveals();
 
   const SECRET_PASSCODE = 'l0vey0u@';
   const introOverlay = document.getElementById('intro-overlay');
@@ -1276,15 +1313,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
     loveSong.play();
 
-    document.querySelectorAll('.bento-media video').forEach((v) => {
-      v.muted = true;
-      v.play().catch(() => {});
-    });
-
     setTimeout(() => {
       introOverlay.classList.add('hidden');
       animTime = 0.0;
       isRunning = true;
+      resizeCanvas();
     }, 280);
   }
 
@@ -1319,7 +1352,29 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }, { once: true });
 
-  // 3D Vortex Morphing Sculpture Buttons
+  // Multi-Scene Next / Prev / Tab / Dot Navigation
+  document.getElementById('prev-scene-btn').addEventListener('click', () => {
+    goToScene(currentSceneIdx - 1);
+  });
+  document.getElementById('next-scene-btn').addEventListener('click', () => {
+    goToScene(currentSceneIdx + 1);
+  });
+
+  document.querySelectorAll('.scene-tab').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const idx = parseInt(tab.getAttribute('data-scene') || '0', 10);
+      goToScene(idx);
+    });
+  });
+
+  document.querySelectorAll('.s-dot').forEach((dot) => {
+    dot.addEventListener('click', () => {
+      const idx = parseInt(dot.getAttribute('data-scene') || '0', 10);
+      goToScene(idx);
+    });
+  });
+
+  // 3D Morphing Sculpture Buttons
   document.getElementById('mode-heart-btn').addEventListener('click', () => setSculptureMode('heart'));
   document.getElementById('mode-kitty-btn').addEventListener('click', () => setSculptureMode('kitty'));
   document.getElementById('mode-spidey-btn').addEventListener('click', () => setSculptureMode('spidey'));
@@ -1353,49 +1408,10 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Authentic Egyptian Arabic Love Letter Modal
-  const LOVE_LETTER_TEXT =
-    'بصي بقى يا ستي.. أنا قعدت أعملك الموقع ده تفصيلة تفصيلة عشان يطلع شبهنا إحنا الاتنين، ' +
-    'وعشان كل ما تفتحيه تفتكري قد إيه إنتي فارقة في حياتي. ' +
-    'من أول قعدتنا في العربية ومسكة إيدك اللي بالدنيا، لخروجة المراجيح بالليل وهبلنا، ' +
-    'لحد مكالماتنا بالساعات والفلاتر العجيبة اللي بنفضل نضحك عليها من قلبنا. ' +
-    'والله العظيم إنتي أحلى وأغلى حاجة حصلتلي، وربنا يديمك في حياتي وما يحرمنيش من ضحكتك ولا من وجودك جمبي أبداً.. بحبك أوي.';
-  let typewriterTimer = null;
-
-  const letterModal = document.getElementById('letter-modal');
-  const openLetterBtn = document.getElementById('open-letter-btn');
-  const navLetterBtn = document.getElementById('nav-letter-btn');
-  const closeLetterBtn = document.getElementById('close-letter-btn');
-  const typewriterEl = document.getElementById('typewriter-text');
-
-  function openLoveLetter() {
-    letterModal.classList.remove('hidden');
-    typewriterEl.textContent = '';
-    if (typewriterTimer) clearInterval(typewriterTimer);
-    let charIdx = 0;
-    typewriterTimer = setInterval(() => {
-      if (charIdx < LOVE_LETTER_TEXT.length) {
-        typewriterEl.textContent += LOVE_LETTER_TEXT[charIdx++];
-      } else {
-        clearInterval(typewriterTimer);
-      }
-    }, 28);
-  }
-
-  if (openLetterBtn) openLetterBtn.addEventListener('click', openLoveLetter);
-  if (navLetterBtn) navLetterBtn.addEventListener('click', openLoveLetter);
-
-  if (closeLetterBtn && letterModal) {
-    closeLetterBtn.addEventListener('click', () => {
-      if (typewriterTimer) clearInterval(typewriterTimer);
-      letterModal.classList.add('hidden');
-    });
-    letterModal.addEventListener('click', (e) => {
-      if (e.target.id === 'letter-modal') {
-        if (typewriterTimer) clearInterval(typewriterTimer);
-        letterModal.classList.add('hidden');
-      }
-    });
+  // Replay Love Letter Button in Scene 5
+  const replayLetterBtn = document.getElementById('replay-letter-btn');
+  if (replayLetterBtn) {
+    replayLetterBtn.addEventListener('click', startLoveLetterTypewriter);
   }
 
   document.getElementById('close-spotlight-btn').addEventListener('click', closeSpotlight);

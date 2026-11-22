@@ -10,28 +10,27 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Background Spider-Web & Hello Kitty Ambient SVG Layer -->
+  <!-- Subtle Background Spider-Web Corner Lines -->
   <div class="ambient-bg-web" aria-hidden="true">
     <svg class="corner-web top-left-web" viewBox="0 0 240 240" fill="none">
-      <path d="M0 0 L240 60 M0 0 L200 130 M0 0 L130 200 M0 0 L60 240" stroke="rgba(225,29,72,0.16)" stroke-width="1"/>
-      <path d="M50 12 Q45 35 32 42 Q22 48 12 50" stroke="rgba(244,114,182,0.22)" stroke-width="1" fill="none"/>
-      <path d="M100 25 Q88 68 65 82 Q44 95 25 100" stroke="rgba(225,29,72,0.18)" stroke-width="1" fill="none"/>
-      <path d="M160 40 Q138 105 104 132 Q70 150 40 160" stroke="rgba(244,114,182,0.18)" stroke-width="1" fill="none"/>
+      <path d="M0 0 L240 60 M0 0 L200 130 M0 0 L130 200 M0 0 L60 240" stroke="rgba(225,29,72,0.14)" stroke-width="1"/>
+      <path d="M50 12 Q45 35 32 42 Q22 48 12 50" stroke="rgba(244,114,182,0.18)" stroke-width="1" fill="none"/>
+      <path d="M100 25 Q88 68 65 82 Q44 95 25 100" stroke="rgba(225,29,72,0.15)" stroke-width="1" fill="none"/>
+      <path d="M160 40 Q138 105 104 132 Q70 150 40 160" stroke="rgba(244,114,182,0.15)" stroke-width="1" fill="none"/>
     </svg>
     <svg class="corner-web top-right-web" viewBox="0 0 240 240" fill="none">
-      <path d="M240 0 L0 60 M240 0 L40 130 M240 0 L110 200 M240 0 L180 240" stroke="rgba(244,114,182,0.18)" stroke-width="1"/>
-      <path d="M190 12 Q195 35 208 42 Q218 48 228 50" stroke="rgba(225,29,72,0.2)" stroke-width="1" fill="none"/>
-      <path d="M140 25 Q152 68 175 82 Q196 95 215 100" stroke="rgba(244,114,182,0.2)" stroke-width="1" fill="none"/>
-      <path d="M80 40 Q102 105 136 132 Q170 150 200 160" stroke="rgba(225,29,72,0.16)" stroke-width="1" fill="none"/>
+      <path d="M240 0 L0 60 M240 0 L40 130 M240 0 L110 200 M240 0 L180 240" stroke="rgba(244,114,182,0.15)" stroke-width="1"/>
+      <path d="M190 12 Q195 35 208 42 Q218 48 228 50" stroke="rgba(225,29,72,0.16)" stroke-width="1" fill="none"/>
+      <path d="M140 25 Q152 68 175 82 Q196 95 215 100" stroke="rgba(244,114,182,0.16)" stroke-width="1" fill="none"/>
+      <path d="M80 40 Q102 105 136 132 Q170 150 200 160" stroke="rgba(225,29,72,0.14)" stroke-width="1" fill="none"/>
     </svg>
   </div>
 
   <!-- =========================================================================
-       SECRET PASSCODE VAULT ("l0vey0u@") — HELLO KITTY × SPIDER-MAN
+       PASSCODE VAULT ("l0vey0u@") — HELLO KITTY × SPIDER-MAN
        ========================================================================= -->
   <div id="intro-overlay" class="intro-overlay">
     <div class="gate-card" id="intro-card">
-      <!-- Custom Dual Emblem: Spider-Man Mask × Hello Kitty with Pink Bow -->
       <div class="dual-crest-wrap">
         <!-- Hello Kitty SVG -->
         <svg class="crest-svg kitty-crest" viewBox="0 0 120 100" fill="none">
@@ -50,7 +49,7 @@
           <line x1="109" y1="68" x2="94" y2="66" stroke="#1f1218" stroke-width="2.2" stroke-linecap="round"/>
         </svg>
 
-        <!-- Center Heart Web Connector -->
+        <!-- Center Heart Bridge -->
         <div class="crest-heart-bridge">
           <svg viewBox="0 0 36 36" class="bridge-heart-svg">
             <path d="M18 31 C18 31 4 21 4 11.5 C4 6.5 8 3 12.5 3 C15.4 3 17.2 4.6 18 6.5 C18.8 4.6 20.6 3 23.5 3 C28 3 32 6.5 32 11.5 C32 21 18 31 18 31 Z" fill="url(#gradHeart)" stroke="#fda4af" stroke-width="1.2"/>
@@ -101,7 +100,7 @@
   <audio id="bg-love-song" src="assets/meen_ye3ayeshak.mp3" preload="auto" loop></audio>
 
   <!-- =========================================================================
-       FLOATING TOP NAVIGATION BAR
+       TOP SCENE HEADER BAR (Step Indicator + Direct Scene Tabs + Song Control)
        ========================================================================= -->
   <header id="site-navbar" class="site-navbar">
     <div class="nav-brand">
@@ -110,12 +109,13 @@
       <span class="brand-spidey">سبايدر مان</span>
     </div>
 
-    <nav class="nav-links">
-      <a href="#hero-section" class="nav-link active">أول الحكاية</a>
-      <a href="#duality-section" class="nav-link">إنتي وأنا</a>
-      <a href="#memories-section" class="nav-link">صورنا وفيديوهاتنا (16)</a>
-      <a href="#reasons-section" class="nav-link">حاجات بحبها فيكي</a>
-      <button id="nav-letter-btn" class="nav-pill-btn" type="button">كلمتين من قلبي</button>
+    <!-- 5 Scene Pills -->
+    <nav class="scene-step-pills" aria-label="Scenes">
+      <button class="scene-tab active" data-scene="0" type="button">١. قلبنا</button>
+      <button class="scene-tab" data-scene="1" type="button">٢. إنتي وأنا</button>
+      <button class="scene-tab" data-scene="2" type="button">٣. ذكرياتنا (16)</button>
+      <button class="scene-tab" data-scene="3" type="button">٤. بحب فيكي إيه</button>
+      <button class="scene-tab" data-scene="4" type="button">٥. رسالتي ليكي</button>
     </nav>
 
     <button id="audio-toggle-btn" class="nav-audio-btn" type="button">
@@ -125,16 +125,18 @@
   </header>
 
   <!-- =========================================================================
-       MAIN SCROLLABLE MULTI-CHAPTER EXPERIENCE
+       FULL-SCREEN MULTI-SCENE STAGE (1 SCENE AT A TIME + SMOOTH 3D TRANSITIONS)
        ========================================================================= -->
-  <main id="app-shell" class="app-shell">
+  <main id="scenes-viewport" class="scenes-viewport">
 
-    <!-- CHAPTER 1: 3D MORPHING SPIDER-KITTY HEART, HELLO KITTY, SPIDEY & ROSE -->
-    <section id="hero-section" class="hero-section">
+    <!-- =======================================================================
+         SCENE 1 OF 5: 3D OPEN-CENTER HEART & MORPHING SCULPTURES
+         ======================================================================= -->
+    <section class="scene-page active" data-scene-index="0" id="scene-0">
       <div class="hero-canvas-stage" id="visual-pane">
         <canvas id="ring-canvas"></canvas>
 
-        <!-- Center Floating Calligraphic "بحبك" + Hello Kitty Bow Inside the 3D Heart -->
+        <!-- Center "بحبك" Inside the 100% Pure Black Hollow Center of the 3D Open Heart -->
         <div id="ring-core-overlay" class="ring-core-overlay">
           <svg class="core-bow-svg" viewBox="0 0 54 32" fill="none">
             <path d="M22 14 C9 3, 4 17, 17 20 C6 25, 15 31, 24 20 Z" fill="rgba(244,114,182,0.35)" stroke="#f472b6" stroke-width="1.6"/>
@@ -142,162 +144,188 @@
             <circle cx="27" cy="17" r="4.2" fill="#e11d48" stroke="#fda4af" stroke-width="1.4"/>
           </svg>
           <span class="core-word">بحبك</span>
-          <span class="core-sub" id="core-sub-text">أحلى حاجة حصلتلي في حياتي</span>
         </div>
 
-        <!-- 3D Morphing Sculpture Switcher Dock -->
-        <div class="sculpture-switcher" dir="rtl">
-          <button id="mode-heart-btn" class="sculpt-btn active" type="button">
-            <span>قلبنا إحنا الاتنين</span>
-          </button>
-          <button id="mode-kitty-btn" class="sculpt-btn" type="button">
-            <span>هالو كيتي بتاعتك</span>
-          </button>
-          <button id="mode-spidey-btn" class="sculpt-btn" type="button">
-            <span>سبايدر مان بتاعك</span>
-          </button>
-          <button id="mode-rose-btn" class="sculpt-btn" type="button">
-            <span>وردة لعيونك</span>
-          </button>
+        <!-- Clean Caption & 3D Morphing Switcher Positioned Below the Sculpture (Zero Overlap!) -->
+        <div class="scene1-bottom-hud" dir="rtl">
+          <p id="core-sub-text" class="scene1-caption">أحلى حاجة حصلتلي في حياتي — دوسي وجربي تغيري الشكل</p>
+          <div class="sculpture-switcher">
+            <button id="mode-heart-btn" class="sculpt-btn active" type="button">قلبنا إحنا الاتنين</button>
+            <button id="mode-kitty-btn" class="sculpt-btn" type="button">هالو كيتي بتاعتك</button>
+            <button id="mode-spidey-btn" class="sculpt-btn" type="button">سبايدر مان بتاعك</button>
+            <button id="mode-rose-btn" class="sculpt-btn" type="button">وردة لعيونك</button>
+          </div>
         </div>
-
-        <a href="#duality-section" class="scroll-down-hint">
-          <span>انزلي لتحت كملي الباقي</span>
-          <span class="scroll-arrow">↓</span>
-        </a>
       </div>
     </section>
 
-    <!-- CHAPTER 2: HELLO KITTY (HER) × SPIDER-MAN (HIM) — COUPLE DUALITY + ELASTIC WEB STRING -->
-    <section id="duality-section" class="duality-section reveal-section">
-      <div class="section-header">
-        <span class="section-tag">حكايتنا إحنا الاتنين</span>
-        <h2 class="section-title">إنتي هالو كيتي.. وأنا سبايدر مان بتاعك</h2>
-        <p class="section-desc">يمكن عالمين مختلفين، بس من يوم ما عرفتك وقلبي مربوط بقلبك ومش شايف غيرك</p>
-      </div>
+    <!-- =======================================================================
+         SCENE 2 OF 5: HELLO KITTY (HER) × SPIDER-MAN (HIM) + ELASTIC WEB STRING
+         ======================================================================= -->
+    <section class="scene-page" data-scene-index="1" id="scene-1">
+      <div class="scene-inner">
+        <div class="section-header compact-header">
+          <span class="section-tag">المشهد التاني — حكايتنا</span>
+          <h2 class="section-title">إنتي هالو كيتي.. وأنا سبايدر مان بتاعك</h2>
+          <p class="section-desc">يمكن عالمين مختلفين، بس من يوم ما عرفتك وقلبي مربوط بقلبك ومش شايف غيرك</p>
+        </div>
 
-      <!-- Interactive Elastic Spider-Web Physics String Canvas Connecting Their Cards -->
-      <div class="elastic-web-wrapper">
-        <canvas id="elastic-web-canvas" class="elastic-web-canvas"></canvas>
-      </div>
+        <!-- Interactive Elastic Spider-Web Physics String Canvas -->
+        <div class="elastic-web-wrapper">
+          <canvas id="elastic-web-canvas" class="elastic-web-canvas"></canvas>
+        </div>
 
-      <div class="duality-grid">
-        <!-- Her Card: Hello Kitty Edition -->
-        <div class="persona-card kitty-card tilt-card reveal-item">
+        <div class="duality-grid">
+          <!-- Her Card: Hello Kitty Edition -->
+          <div class="persona-card kitty-card tilt-card">
+            <div class="card-glare"></div>
+            <div class="persona-ribbon-tag">هالو كيتي قلبي</div>
+            <div class="persona-header">
+              <div class="persona-avatar">
+                <img src="assets/photo9.jpg" alt="Hello Kitty" />
+              </div>
+              <div class="persona-titles">
+                <h3>إنتي — بنوتي الدلوعة</h3>
+                <span>أحلى ضحكة وأحلى روح في حياتي</span>
+              </div>
+            </div>
+            <p class="persona-quote">
+              « أحلى هالو كيتي في الكاب البينك.. الضحكة اللي بتنسيني الدنيا كلها، والهبل والعفوية اللي مبحبش في حياتي قدهم. ربنا يخليكي ليا وما يحرمنيش من ضحكتك دي أبداً. »
+            </p>
+            <div class="persona-tags">
+              <span>ضحكتها حياة</span>
+              <span>الكاب البينك</span>
+              <span>دلوعة قلبي</span>
+            </div>
+          </div>
+
+          <!-- Center Card -->
+          <div class="couple-center-card tilt-card">
+            <div class="card-glare"></div>
+            <div class="center-photo-frame">
+              <img src="assets/photo1.jpg" alt="Us Together" />
+            </div>
+            <h4>من أول يوم ولحد آخر العمر</h4>
+            <p>حركي الماوس فوق الخيط أو دوسي هنا وشوفي خيط الشبكة بيننا</p>
+            <button id="shoot-web-btn" class="web-pulse-btn" type="button">
+              شدّي خيط الشبكة بين قلوبنا
+            </button>
+            <div id="web-bond-msg" class="web-bond-msg">ربنا يخليكي ليا ونفضل سوا طول العمر</div>
+          </div>
+
+          <!-- His Card: Spider-Man Edition -->
+          <div class="persona-card spidey-card tilt-card">
+            <div class="card-glare"></div>
+            <div class="persona-ribbon-tag spidey-tag">سبايدر مان بتاعك</div>
+            <div class="persona-header">
+              <div class="persona-avatar spidey-border">
+                <img src="assets/photo11.jpg" alt="Spider-Man" />
+              </div>
+              <div class="persona-titles">
+                <h3>أنا — دايماً في ضهرك وجنبك</h3>
+                <span>اللي قلبه متعلق بيكي لوحدك</span>
+              </div>
+            </div>
+            <p class="persona-quote">
+              « لو سبايدر مان بيحمي مدينة، فأنا معنديش في الدنيا دي كلها أغلى منك أحافظ عليه. في الضحك وفي الهزار وفي المراجيح بالليل وفي كل مشوار، هفضل دايماً ماسك إيدك. »
+            </p>
+            <div class="persona-tags spidey-tags">
+              <span>في ضهرك دايماً</span>
+              <span>ماسك إيدك</span>
+              <span>بحبك وبس</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =======================================================================
+         SCENE 3 OF 5: INTERACTIVE 16-MEMORY SHOWCASE (13 PHOTOS + 3 LIVE VIDEOS)
+         ======================================================================= -->
+    <section class="scene-page" data-scene-index="2" id="scene-2">
+      <div class="scene-inner">
+        <div class="section-header compact-header">
+          <span class="section-tag">المشهد التالت — شريط ذكرياتنا</span>
+          <h2 class="section-title">كل صورة وفيديو لينا ليهم حكاية في قلبي</h2>
+
+          <div class="gallery-filters">
+            <button class="filter-btn active" data-filter="all" type="button">كل ذكرياتنا (16)</button>
+            <button class="filter-btn" data-filter="video" type="button">فيديوهاتنا وصوت ضحكنا (3)</button>
+            <button class="filter-btn" data-filter="together" type="button">خروجاتنا والورد (7)</button>
+            <button class="filter-btn" data-filter="calls" type="button">مكالماتنا والفلاتر (6)</button>
+          </div>
+        </div>
+
+        <div id="memories-bento-grid" class="memories-bento-grid"></div>
+      </div>
+    </section>
+
+    <!-- =======================================================================
+         SCENE 4 OF 5: 8 INTERACTIVE 3D FLIP CARDS ("بحب فيكي إيه؟")
+         ======================================================================= -->
+    <section class="scene-page" data-scene-index="3" id="scene-3">
+      <div class="scene-inner">
+        <div class="section-header compact-header">
+          <span class="section-tag">المشهد الرابع — بصراحة ومن الآخر</span>
+          <h2 class="section-title">حاجات بتخليني أحبك كل يوم أكتر من اللي قبله</h2>
+          <p class="section-desc">دوسي على كل كارت عشان يلف وتقرأي اللي جواه</p>
+        </div>
+
+        <div id="reasons-grid" class="reasons-grid"></div>
+      </div>
+    </section>
+
+    <!-- =======================================================================
+         SCENE 5 OF 5: THE GRAND FINALE LOVE LETTER PAGE
+         ======================================================================= -->
+    <section class="scene-page" data-scene-index="4" id="scene-4">
+      <div class="scene-inner finale-scene-inner">
+        <div class="finale-letter-stage tilt-card">
           <div class="card-glare"></div>
-          <div class="persona-ribbon-tag">هالو كيتي قلبي</div>
-          <div class="persona-header">
-            <div class="persona-avatar">
-              <img src="assets/photo9.jpg" alt="Hello Kitty" />
+          <div class="finale-top-row">
+            <div class="finale-photo-circle">
+              <img src="assets/photo3.jpg" alt="إيدك في إيدي" />
             </div>
-            <div class="persona-titles">
-              <h3>إنتي — بنوتي الدلوعة</h3>
-              <span>أحلى ضحكة وأحلى روح في حياتي</span>
+            <div class="finale-titles">
+              <span class="section-tag">المشهد الأخير — من قلبي ليكي</span>
+              <h2>حبيبتي وأحلى حاجة في دنيتي..</h2>
             </div>
           </div>
-          <p class="persona-quote">
-            « أحلى هالو كيتي في الكاب البينك.. الضحكة اللي بتنسيني الدنيا كلها، والهبل والعفوية اللي مبحبش في حياتي قدهم. ربنا يخليكي ليا وما يحرمنيش من ضحكتك دي أبداً. »
-          </p>
-          <div class="persona-tags">
-            <span>ضحكتها حياة</span>
-            <span>الكاب البينك</span>
-            <span>دلوعة قلبي</span>
-          </div>
-        </div>
 
-        <!-- Center Interactive Web-Heart Connector Card -->
-        <div class="couple-center-card tilt-card reveal-item">
-          <div class="card-glare"></div>
-          <div class="center-photo-frame">
-            <img src="assets/photo1.jpg" alt="Us Together" />
-          </div>
-          <h4>من أول يوم ولحد آخر العمر</h4>
-          <p>حركي الماوس فوق الخيط أو دوسي هنا وشوفي خيط الشبكة بيننا</p>
-          <button id="shoot-web-btn" class="web-pulse-btn" type="button">
-            شدّي خيط الشبكة بين قلوبنا
-          </button>
-          <div id="web-bond-msg" class="web-bond-msg">ربنا يخليكي ليا ونفضل سوا طول العمر</div>
-        </div>
+          <p id="typewriter-text" class="finale-letter-body"></p>
 
-        <!-- His Card: Spider-Man Edition -->
-        <div class="persona-card spidey-card tilt-card reveal-item">
-          <div class="card-glare"></div>
-          <div class="persona-ribbon-tag spidey-tag">سبايدر مان بتاعك</div>
-          <div class="persona-header">
-            <div class="persona-avatar spidey-border">
-              <img src="assets/photo11.jpg" alt="Spider-Man" />
-            </div>
-            <div class="persona-titles">
-              <h3>أنا — دايماً في ضهرك وجنبك</h3>
-              <span>اللي قلبه متعلق بيكي لوحدك</span>
-            </div>
-          </div>
-          <p class="persona-quote">
-            « لو سبايدر مان بيحمي مدينة، فأنا معنديش في الدنيا دي كلها أغلى منك أحافظ عليه. في الضحك وفي الهزار وفي المراجيح بالليل وفي كل مشوار، هفضل دايماً ماسك إيدك. »
-          </p>
-          <div class="persona-tags spidey-tags">
-            <span>في ضهرك دايماً</span>
-            <span>ماسك إيدك</span>
-            <span>بحبك وبس</span>
+          <div class="finale-signature-row">
+            <span class="note-sign">محمد — اللي بيحبك وهيفضل جنبك دايماً</span>
+            <button id="replay-letter-btn" class="sculpt-btn active" type="button">اكتبي الرسالة من الأول ↺</button>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- CHAPTER 3: FULL 16-MEMORY EXHIBITION (13 PHOTOS + 3 LIVE VIDEOS) -->
-    <section id="memories-section" class="memories-section reveal-section">
-      <div class="section-header">
-        <span class="section-tag">أحلى أيام عمري معاكي</span>
-        <h2 class="section-title">ذكرياتنا سوا — كل صورة وفيديو ليهم حكاية</h2>
-        <p class="section-desc">دوسي على أي فيديو أو صورة عشان تفتحيها بحجم كبير وتسمعي صوت ضحكنا في الفيديوهات</p>
-
-        <!-- Filter Buttons -->
-        <div class="gallery-filters">
-          <button class="filter-btn active" data-filter="all" type="button">كل ذكرياتنا (16)</button>
-          <button class="filter-btn" data-filter="video" type="button">فيديوهاتنا وصوت ضحكنا (3)</button>
-          <button class="filter-btn" data-filter="together" type="button">خروجاتنا والورد (7)</button>
-          <button class="filter-btn" data-filter="calls" type="button">مكالماتنا والفلاتر (6)</button>
-        </div>
-      </div>
-
-      <!-- Populated Dynamically with All 16 Memories in High-Resolution 3D Tilt Cards -->
-      <div id="memories-bento-grid" class="memories-bento-grid"></div>
-    </section>
-
-    <!-- CHAPTER 4: INTERACTIVE "8 REASONS WHY I LOVE YOU" FLIP CARDS -->
-    <section id="reasons-section" class="reasons-section reveal-section">
-      <div class="section-header">
-        <span class="section-tag">بصراحة ومن الآخر</span>
-        <h2 class="section-title">حاجات بتخليني أحبك كل يوم أكتر من اللي قبله</h2>
-        <p class="section-desc">دوسي على كل كارت عشان يلف وتقرأي اللي جواه</p>
-      </div>
-
-      <div id="reasons-grid" class="reasons-grid"></div>
-
-      <!-- Finale Love Letter Call-To-Action -->
-      <div class="finale-cta-box tilt-card reveal-item">
-        <div class="card-glare"></div>
-        <h3>وفي الآخر.. فيه كلمتين من قلبي ليكي</h3>
-        <p>كتبتهم ليكي مخصوص عشان تفضلي فاكراهم كل ما تفتحي الموقع ده</p>
-        <button id="open-letter-btn" class="gate-submit finale-btn" type="button">
-          اقري رسالتي ليكي
-        </button>
-      </div>
-    </section>
   </main>
 
-  <!-- Romantic Love Letter Modal -->
-  <div id="letter-modal" class="editorial-modal hidden">
-    <div class="editorial-note-card" dir="rtl">
-      <div class="note-top-bar">
-        <span class="note-meta">من قلبي ليكي</span>
-        <button id="close-letter-btn" class="minimal-close" type="button">إغلاق ✕</button>
-      </div>
-      <h2 class="note-heading">حبيبتي وأحلى حاجة في دنيتي..</h2>
-      <p id="typewriter-text" class="note-body"></p>
-      <div class="note-sign">محمد — اللي بيحبك وهيفضل جنبك دايماً</div>
+  <!-- =========================================================================
+       PERSISTENT BOTTOM SCENE NAVIGATION BAR (PREV / SCENE COUNTER / NEXT)
+       ========================================================================= -->
+  <footer id="scene-footer-nav" class="scene-footer-nav">
+    <button id="prev-scene-btn" class="scene-nav-btn prev-btn" type="button" disabled>
+      <span>❮</span>
+      <span id="prev-scene-label">السابق</span>
+    </button>
+
+    <div class="scene-progress-dots" id="scene-progress-dots">
+      <span class="s-dot active" data-scene="0"></span>
+      <span class="s-dot" data-scene="1"></span>
+      <span class="s-dot" data-scene="2"></span>
+      <span class="s-dot" data-scene="3"></span>
+      <span class="s-dot" data-scene="4"></span>
     </div>
-  </div>
+
+    <button id="next-scene-btn" class="scene-nav-btn next-btn" type="button">
+      <span id="next-scene-label">كملي الحكاية: إنتي وأنا</span>
+      <span>❯</span>
+    </button>
+  </footer>
 
   <!-- Full-Resolution Cinema Viewer Modal (Photos & Videos with Original Sound) -->
   <div id="spotlight-modal" class="editorial-modal hidden">
